@@ -1,0 +1,44 @@
+{
+  "eula": "",
+  "vendor": "petr.anderle@c42.cz",
+  "license": "",
+  "id": "com.company.sac.appendix.table",
+  "version": "1.0.0",
+  "name": "Appendix Table",
+  "newInstancePrefix": "AppendixTable",
+  "description": "Displays current SAC variables and filters as a structured appendix table.",
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "com-company-sac-appendix-table",
+      "url": "appendix-table.js",
+      "integrity": "",
+      "ignoreIntegrity": true
+    }
+  ],
+  "properties": {
+    "rows": {
+      "type": "string",
+      "description": "JSON array with appendix rows."
+    }
+  },
+  "methods": {
+    "setRows": {
+      "description": "Sets appendix rows as JSON string.",
+      "parameters": [
+        {
+          "name": "rows",
+          "type": "string",
+          "description": "JSON array of rows."
+        }
+      ],
+      "returnType": "void"
+    },
+    "clear": {
+      "description": "Clears appendix table.",
+      "parameters": [],
+      "returnType": "void"
+    }
+  },
+  "events": {}
+}
