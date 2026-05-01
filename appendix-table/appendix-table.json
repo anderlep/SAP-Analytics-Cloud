@@ -3,10 +3,10 @@
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
   "id": "com.company.sac.appendix.table",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "name": "Appendix Table",
   "newInstancePrefix": "AppendixTable",
-  "description": "Displays SAC variables, filters or arbitrary metadata as a configurable and styleable appendix table.",
+  "description": "Displays SAC variables, filters or arbitrary metadata as a configurable, styleable and dynamic appendix table.",
   "webcomponents": [
     {
       "kind": "main",
@@ -31,11 +31,15 @@
     },
     "styleConfig": {
       "type": "string",
-      "description": "JSON style configuration for table appearance."
+      "description": "JSON style configuration for table appearance, templates, column width mode and totals."
     },
     "customCss": {
       "type": "string",
       "description": "Custom CSS injected into the widget shadow DOM."
+    },
+    "rules": {
+      "type": "string",
+      "description": "JSON array with conditional styling rules."
     }
   },
   "methods": {
@@ -94,13 +98,24 @@
       ],
       "returnType": "void"
     },
+    "setRules": {
+      "description": "Sets conditional styling rules as JSON string.",
+      "parameters": [
+        {
+          "name": "rules",
+          "type": "string",
+          "description": "JSON array with conditional styling rules."
+        }
+      ],
+      "returnType": "void"
+    },
     "setData": {
-      "description": "Sets config, columns, styleConfig, customCss and rows at once.",
+      "description": "Sets config, columns, styleConfig, customCss, rules and rows at once.",
       "parameters": [
         {
           "name": "data",
           "type": "string",
-          "description": "JSON object with config, columns, styleConfig, customCss and rows."
+          "description": "JSON object with config, columns, styleConfig, customCss, rules and rows."
         }
       ],
       "returnType": "void"

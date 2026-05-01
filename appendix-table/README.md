@@ -2,22 +2,24 @@
 
 ## 📌 Overview
 
-Appendix Table is a custom widget for SAP Analytics Cloud (SAC) that displays filters, variables, or any structured metadata in a flexible table format.
+Appendix Table is a custom widget for SAP Analytics Cloud (SAC) that displays filters, variables, input-control selections, totals, or any structured metadata in a flexible table format.
 
-Originally designed for showing SAC filters/variables, the widget is now fully dynamic and reusable for any tabular metadata.
+The widget is fully dynamic, configurable, and supports SAC-like table styling.
 
 ---
 
 ## 🚀 Features
 
-* ✅ Dynamic columns (not limited)
-* ✅ Configurable column headers
-* ✅ Optional operator column (`showOperator`)
-* ✅ Full styling support (similar to SAC tables)
-* ✅ Custom CSS injection
-* ✅ Sticky header support
-* ✅ Fully data-driven rendering
-* ✅ Lightweight (pure Web Component)
+* ✅ Dynamic columns
+* ✅ Configurable headers
+* ✅ Optional operator column
+* ✅ SAC-like templates
+* ✅ Auto / manual column width
+* ✅ Styling rules
+* ✅ Total row support
+* ✅ Custom CSS support
+* ✅ Sticky header
+* ✅ Lightweight Web Component
 
 ---
 
@@ -31,42 +33,51 @@ Upload `appendix-table.js` to a public HTTPS location:
 https://<your-domain>/appendix-table.js
 ```
 
----
-
 ### 2. Import into SAC
 
 1. Go to **Custom Widgets**
 2. Click **Upload**
 3. Upload `appendix-table.json`
-4. Add widget to your Story / Analytics Application
+4. Add **Appendix Table** to your Story / Analytics Application
 
 ---
 
 ## ⚙️ Properties
 
-| Property      | Type   | Description                       |
-| ------------- | ------ | --------------------------------- |
-| `rows`        | string | JSON array with table rows        |
-| `config`      | string | JSON config for default structure |
-| `columns`     | string | JSON array for dynamic columns    |
-| `styleConfig` | string | JSON styling configuration        |
-| `customCss`   | string | Custom CSS                        |
+| Property      | Type   | Description                              |
+| ------------- | ------ | ---------------------------------------- |
+| `rows`        | string | JSON array with table rows               |
+| `config`      | string | Default header/behavior config           |
+| `columns`     | string | Dynamic column definitions               |
+| `styleConfig` | string | Styling, templates, totals, column width |
+| `customCss`   | string | Custom CSS                               |
+| `rules`       | string | Conditional styling rules                |
 
 ---
 
-## 🧩 Data Structures
-
-### Rows
+## 🧩 Basic Rows
 
 ```json
 [
-  { "label": "Company Code", "op": "=", "value": "1000" }
+  { "label": "Company Code", "op": "=", "value": "1000" },
+  { "label": "Fiscal Year", "op": "=", "value": "2024" }
 ]
+```
+
+SAC script:
+
+```javascript
+AppendixTable_1.setRows(
+  '[' +
+  '{"label":"Company Code","op":"=","value":"1000"},' +
+  '{"label":"Fiscal Year","op":"=","value":"2024"}' +
+  ']'
+);
 ```
 
 ---
 
-### Config
+## ⚙️ Config
 
 ```json
 {
@@ -78,63 +89,7 @@ https://<your-domain>/appendix-table.js
 }
 ```
 
----
-
-### Dynamic Columns
-
-```json
-[
-  { "key": "type", "title": "Type" },
-  { "key": "name", "title": "Name" },
-  { "key": "selection", "title": "Selection" }
-]
-```
-
----
-
-### Style Config
-
-```json
-{
-  "fontSize": "13px",
-  "fontFamily": "Arial",
-  "headerBackground": "#354a5f",
-  "headerColor": "#ffffff",
-  "rowBackground": "#ffffff",
-  "alternateRowBackground": "#f7f7f7",
-  "borderColor": "#d9d9d9",
-  "textColor": "#333333",
-  "rowHeight": "compact",
-  "showGrid": true,
-  "stickyHeader": true
-}
-```
-
----
-
-## 🧪 Usage in SAC
-
-### Basic Example
-
-```javascript
-AppendixTable_1.setRows(
-  '[{"label":"Company Code","op":"=","value":"1000"}]'
-);
-```
-
----
-
-### With Config
-
-```javascript
-AppendixTable_1.setConfig(
-  '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}'
-);
-```
-
----
-
-### Without Operator Column
+Hide operator column:
 
 ```javascript
 AppendixTable_1.setConfig(
@@ -144,91 +99,269 @@ AppendixTable_1.setConfig(
 
 ---
 
-### Dynamic Columns
+## 🧱 Dynamic Columns
+
+```json
+[
+  { "key": "type", "title": "Type", "width": "20%" },
+  { "key": "name", "title": "Name", "width": "30%" },
+  { "key": "selection", "title": "Selection", "width": "50%" }
+]
+```
+
+SAC script:
 
 ```javascript
 AppendixTable_1.setColumns(
-  '[{"key":"type","title":"Type"},{"key":"name","title":"Name"},{"key":"selection","title":"Selection"}]'
+  '[' +
+  '{"key":"type","title":"Type","width":"20%"},' +
+  '{"key":"name","title":"Name","width":"30%"},' +
+  '{"key":"selection","title":"Selection","width":"50%"}' +
+  ']'
 );
 
 AppendixTable_1.setRows(
-  '[{"type":"Variable","name":"Fiscal Year","selection":"2024"}]'
+  '[' +
+  '{"type":"Variable","name":"Fiscal Year","selection":"2024"},' +
+  '{"type":"Input Control","name":"Region","selection":"EMEA, APJ"}' +
+  ']'
 );
 ```
 
 ---
 
-### Styling
+## 🎨 SAC-like Templates
+
+Supported templates:
+
+| SAC Template     | `styleConfig.template` |
+| ---------------- | ---------------------- |
+| Default          | `default`              |
+| Report-Styling   | `report`               |
+| Alternating Rows | `alternating`          |
+| Basic            | `basic`                |
+
+Example:
 
 ```javascript
 AppendixTable_1.setStyleConfig(
-  '{"headerBackground":"#354a5f","headerColor":"#fff","rowHeight":"compact"}'
+  '{"template":"report"}'
 );
 ```
 
 ---
 
-### Custom CSS
+## 📏 Column Width
+
+Supported modes:
+
+| Mode     | Description                  |
+| -------- | ---------------------------- |
+| `auto`   | Browser auto-resizes columns |
+| `manual` | Uses `columns[].width`       |
+
+Example:
+
+```javascript
+AppendixTable_1.setStyleConfig(
+  '{"template":"default","columnWidthMode":"manual"}'
+);
+```
+
+---
+
+## 🎛️ Style Config
+
+```json
+{
+  "template": "default",
+  "columnWidthMode": "auto",
+  "fontSize": "12px",
+  "fontFamily": "Arial, Helvetica, sans-serif",
+  "rowHeight": "default",
+  "showGrid": true,
+  "stickyHeader": true,
+  "showTotal": false
+}
+```
+
+Useful fields:
+
+| Field             | Values                                      |
+| ----------------- | ------------------------------------------- |
+| `template`        | `default`, `report`, `alternating`, `basic` |
+| `columnWidthMode` | `auto`, `manual`                            |
+| `rowHeight`       | `compact`, `default`, `comfortable`         |
+| `showGrid`        | `true`, `false`                             |
+| `stickyHeader`    | `true`, `false`                             |
+| `showTotal`       | `true`, `false`                             |
+
+---
+
+## 🧮 Total Row
+
+Enable total:
+
+```javascript
+AppendixTable_1.setStyleConfig(
+  '{"template":"report","showTotal":true,"totalLabel":"Total"}'
+);
+```
+
+Column definition with total:
+
+```javascript
+AppendixTable_1.setColumns(
+  '[' +
+  '{"key":"store","title":"Store"},' +
+  '{"key":"amount","title":"Value","total":"sum","format":"number"}' +
+  ']'
+);
+
+AppendixTable_1.setRows(
+  '[' +
+  '{"store":"Second Hand","amount":"7770270.07"},' +
+  '{"store":"Ozzy","amount":"6957157.78"},' +
+  '{"store":"Park Market","amount":"7739920.39"}' +
+  ']'
+);
+```
+
+Supported totals:
+
+| Total   | Description         |
+| ------- | ------------------- |
+| `sum`   | Sums numeric values |
+| `count` | Counts rows         |
+
+---
+
+## 🎯 Styling Rules
+
+Rules allow conditional formatting.
+
+```json
+[
+  {
+    "column": "store",
+    "operator": "contains",
+    "value": "Market",
+    "target": "row",
+    "style": {
+      "backgroundColor": "#eef5ff",
+      "fontWeight": "600"
+    }
+  }
+]
+```
+
+SAC script:
+
+```javascript
+AppendixTable_1.setRules(
+  '[' +
+  '{"column":"store","operator":"contains","value":"Market","target":"row","style":{"backgroundColor":"#eef5ff","fontWeight":"600"}}' +
+  ']'
+);
+```
+
+Supported operators:
+
+| Operator     | Description      |
+| ------------ | ---------------- |
+| `equals`     | Exact match      |
+| `notEquals`  | Not equal        |
+| `contains`   | Contains text    |
+| `startsWith` | Starts with text |
+| `endsWith`   | Ends with text   |
+| `empty`      | Empty value      |
+| `notEmpty`   | Non-empty value  |
+
+Supported rule targets:
+
+| Target | Description               |
+| ------ | ------------------------- |
+| `cell` | Styles only matching cell |
+| `row`  | Styles whole row          |
+
+---
+
+## 🧵 Custom CSS
 
 ```javascript
 AppendixTable_1.setCustomCss(
-  'td{font-size:14px;} tr:hover{background:#eef5ff;}'
+  'td.value{font-weight:600;} tbody tr:hover td{background:#eef5ff;}'
 );
+```
+
+Useful selectors:
+
+```css
+.wrapper {}
+table {}
+thead th {}
+tbody td {}
+td.operator {}
+td.value {}
+.total-row td {}
+.empty {}
 ```
 
 ---
 
 ## 🔗 SAC Integration
 
-Custom widgets **cannot directly read SAC filters or variables**.
+The widget cannot directly read SAC Input Controls or model variables by itself.
 
-👉 You must pass data via SAC scripting.
+Use SAC scripting to read values and pass them as JSON strings.
 
 ```javascript
 var rows =
   '[' +
-  '{"label":"Region","op":"IN","value":"EMEA, APJ"}' +
+  '{"type":"Input Control","name":"Region","operator":"IN","selection":"EMEA, APJ"},' +
+  '{"type":"Variable","name":"Fiscal Year","operator":"=","selection":"2024"}' +
   ']';
+
+AppendixTable_1.setColumns(
+  '[' +
+  '{"key":"type","title":"Type"},' +
+  '{"key":"name","title":"Name"},' +
+  '{"key":"operator","title":"Operator"},' +
+  '{"key":"selection","title":"Selection"}' +
+  ']'
+);
 
 AppendixTable_1.setRows(rows);
 ```
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Notes
 
-* No direct SAC API access inside widget
-* Requires JSON string input
-* `JSON.stringify` not supported in SAC scripting
-* Browser-based → JS cannot be fully protected
+* Data must be passed as JSON string
+* SAC scripting may not support `JSON.stringify`
+* Custom widget JS must be reachable via HTTPS
+* `ignoreIntegrity: true` shows a development-mode warning in SAC
 
 ---
 
-## 🔐 Security Notes
+## 🔐 Security
 
 For commercial use:
 
-* Use controlled hosting (not GitHub Pages)
+* Avoid public GitHub Pages
+* Use controlled hosting
 * Add license validation
-* Restrict by SAC tenant
+* Restrict by SAC tenant where possible
 
 ---
 
-## 📈 Roadmap
+## 📄 Version
 
-* Auto-binding to SAC Input Controls
-* Export (CSV / PDF)
-* Sorting / filtering
-* Themes
+`1.3.0`
 
 ---
 
 ## 👨‍💻 Author
 
 Petr Anderle
-
----
-
-## 📄 License
-
-Custom / internal (define as needed)
