@@ -757,6 +757,11 @@
         " solid " +
         styleConfig.totalLineColor;
 
+      var columnGap = this._safeCssValue(styleConfig.columnGap, "0px");
+      var useColumnGap = columnGap !== "0px" && columnGap !== "0";
+      var borderCollapse = useColumnGap ? "separate" : "collapse";
+      var borderSpacing = useColumnGap ? columnGap + " 0" : "0";
+
       return (
         ":host{display:block;width:100%;height:100%;box-sizing:border-box;font-family:" +
         fontFamily +
@@ -766,7 +771,11 @@
 
         ".wrapper{width:100%;height:100%;overflow:auto;}" +
 
-        "table{width:100%;border-collapse:collapse;font-size:" +
+        "table{width:100%;border-collapse:" +
+        borderCollapse +
+        ";border-spacing:" +
+        borderSpacing +
+        ";font-size:" + 
         fontSize +
         ";table-layout:" +
         tableLayout +
