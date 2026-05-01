@@ -68,16 +68,6 @@
       "type": "string",
       "default": "both"
     },
-    "setVarianceDisplayMode": {
-      "description": "Set variance display mode: both, raw, percent or none.",
-      "parameters": [
-        {
-          "name": "mode",
-          "type": "string"
-        }
-      ],
-      "returnType": "void"
-    },
     "varianceSeparator": {
       "type": "string",
       "default": " | "
@@ -111,57 +101,37 @@
     "setData": {
       "description": "Set actual and reference values.",
       "parameters": [
-        {
-          "name": "actualValue",
-          "type": "number"
-        },
-        {
-          "name": "referenceValue",
-          "type": "number"
-        }
+        { "name": "actualValue", "type": "number" },
+        { "name": "referenceValue", "type": "number" }
       ],
       "returnType": "void"
     },
     "setZones": {
       "description": "Set lower, target and upper zone percentages. Sum must be 100.",
       "parameters": [
-        {
-          "name": "lowerBoundZonePercentage",
-          "type": "number"
-        },
-        {
-          "name": "targetZonePercentage",
-          "type": "number"
-        },
-        {
-          "name": "upperBoundZonePercentage",
-          "type": "number"
-        }
+        { "name": "lowerBoundZonePercentage", "type": "number" },
+        { "name": "targetZonePercentage", "type": "number" },
+        { "name": "upperBoundZonePercentage", "type": "number" }
       ],
       "returnType": "void"
     },
     "setColors": {
       "description": "Set zone colors and optionally marker color.",
       "parameters": [
-        {
-          "name": "lowerBoundZoneColor",
-          "type": "string"
-        },
-        {
-          "name": "targetZoneColor",
-          "type": "string"
-        },
-        {
-          "name": "upperBoundZoneColor",
-          "type": "string"
-        },
-        {
-          "name": "markerColor",
-          "type": "string"
-        }
+        { "name": "lowerBoundZoneColor", "type": "string" },
+        { "name": "targetZoneColor", "type": "string" },
+        { "name": "upperBoundZoneColor", "type": "string" },
+        { "name": "markerColor", "type": "string" }
+      ],
+      "returnType": "void"
+    },
+    "setVarianceDisplayMode": {
+      "description": "Set variance display mode.",
+      "parameters": [
+        { "name": "mode", "type": "string" }
       ],
       "returnType": "void"
     }
-  },
+},
   "events": {}
 }

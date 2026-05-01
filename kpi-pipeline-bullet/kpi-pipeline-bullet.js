@@ -190,7 +190,9 @@
 
     setVarianceDisplayMode(mode) {
       const allowed = ["both", "raw", "percent", "none"];
-      this._state.varianceDisplayMode = allowed.includes(mode) ? mode : "both";
+      const safeMode = allowed.includes(mode) ? mode : "both";
+
+      this._state.varianceDisplayMode = safeMode;
       this.render();
     }
 
