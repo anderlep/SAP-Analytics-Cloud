@@ -68,6 +68,16 @@
       "type": "string",
       "default": "both"
     },
+    "setVarianceDisplayMode": {
+      "description": "Set variance display mode: both, raw, percent or none.",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
     "varianceSeparator": {
       "type": "string",
       "default": " | "

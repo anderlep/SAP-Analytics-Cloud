@@ -188,6 +188,12 @@
       if (markerColor !== undefined) this.markerColor = markerColor;
     }
 
+    setVarianceDisplayMode(mode) {
+      const allowed = ["both", "raw", "percent", "none"];
+      this._state.varianceDisplayMode = allowed.includes(mode) ? mode : "both";
+      this.render();
+    }
+
     _formatNumber(value, decimals) {
       if (!Number.isFinite(value)) return "–";
       return value.toLocaleString(undefined, {
