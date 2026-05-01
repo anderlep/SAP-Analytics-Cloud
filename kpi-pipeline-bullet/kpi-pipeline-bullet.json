@@ -1,6 +1,6 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "name": "KPI Pipeline Bullet",
   "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, hover variance, hover reference line, smart tooltip and automatic marker label spacing.",
   "newInstancePrefix": "KpiPipelineBullet",

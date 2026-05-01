@@ -869,21 +869,36 @@
       const labelFont = Math.max(6, Number(s.axisFontSize || s.fontSize) * scaleFactor);
       const valueFont = Math.max(6, Number(s.markerFontSize || s.fontSize) * scaleFactor);
 
-      const barY = Math.max(margin.top + 8, height * 0.38);
-      const varianceY = barY - Math.max(18, barH * 1.35);
+      let barY = Math.max(margin.top + 8, height * 0.38);
       const axisLabelY = height - 8;
-      const markerTop = barY - Math.max(6, barH * 0.45);
-      const markerBottom = barY + barH + Math.max(6, barH * 0.45);
+      const markerExtension = Math.max(6, barH * 0.45);
       const markerLabelAutoGap = Math.max(
-        8,
-        markerRadius + markerWidth,
-        Math.round(barH * 0.28),
-        Math.round(valueFont * 0.55)
+        10,
+        markerRadius + markerWidth + 2,
+        Math.round(barH * 0.35),
+        Math.round(valueFont * 0.75)
       );
-      const markerLabelCandidateY = markerBottom + markerLabelAutoGap + valueFont;
-      const markerLabelY = s.showAxisLabels
-        ? Math.min(axisLabelY - Math.max(14, valueFont + 5), markerLabelCandidateY)
-        : Math.min(height - 8, markerLabelCandidateY);
+
+      let markerTop = barY - markerExtension;
+      let markerBottom = barY + barH + markerExtension;
+      let markerLabelCandidateY = markerBottom + markerLabelAutoGap + valueFont;
+      const markerLabelMaxY = s.showAxisLabels
+        ? axisLabelY - Math.max(14, valueFont + 5)
+        : height - 8;
+
+      const minBarY = margin.top + Math.max(6, markerRadius + markerWidth);
+      if (markerLabelCandidateY > markerLabelMaxY && barY > minBarY) {
+        const requiredShift = markerLabelCandidateY - markerLabelMaxY;
+        const availableShift = barY - minBarY;
+        const shiftUp = Math.min(requiredShift, availableShift);
+        barY -= shiftUp;
+        markerTop = barY - markerExtension;
+        markerBottom = barY + barH + markerExtension;
+        markerLabelCandidateY = markerBottom + markerLabelAutoGap + valueFont;
+      }
+
+      const varianceY = barY - Math.max(18, barH * 1.35);
+      const markerLabelY = Math.min(markerLabelMaxY, markerLabelCandidateY);
 
       const scale = (value) => plotX + ((value - axisMin) / axisRange) * plotW;
       const clamp = (x) => Math.max(plotX, Math.min(plotX + plotW, x));
