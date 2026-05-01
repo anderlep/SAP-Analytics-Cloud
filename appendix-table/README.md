@@ -10,16 +10,17 @@ The widget is fully dynamic, configurable, and visually aligned with SAC native 
 
 ## 🚀 Features
 
-* ✅ Dynamic columns
-* ✅ Configurable headers
-* ✅ Optional operator column
-* ✅ SAC-like templates (visual parity)
-* ✅ Auto / manual column width
-* ✅ Conditional styling rules
-* ✅ Total row support
-* ✅ Custom CSS support
-* ✅ Sticky header
-* ✅ Lightweight Web Component (no dependencies)
+* ✅ Dynamic columns  
+* ✅ Configurable headers  
+* ✅ Optional operator column  
+* ✅ SAC-like templates (visual parity)  
+* ✅ Auto / manual column width  
+* ✅ Conditional styling rules  
+* ✅ Total row support  
+* ✅ Custom CSS support  
+* ✅ Sticky header  
+* ✅ Lightweight Web Component (no dependencies)  
+* ✅ DataSource binding (Helper script)  
 
 ---
 
@@ -37,10 +38,10 @@ https://<your-domain>/appendix-table.js
 
 ### 2. Import into SAC
 
-1. Go to **Custom Widgets**
-2. Click **Upload**
-3. Upload `appendix-table.json`
-4. Add **Appendix Table** to your Story / Analytics Application
+1. Go to **Custom Widgets**  
+2. Click **Upload**  
+3. Upload `appendix-table.json`  
+4. Add **Appendix Table** to your Story / Analytics Application  
 
 ---
 
@@ -107,8 +108,6 @@ AppendixTable_1.setColumns(
 
 ## 🎨 SAC-like Templates
 
-Widget supports SAC-like table templates with behavior similar to native SAC tables.
-
 | SAC Template     | `styleConfig.template` | Behavior                                                   |
 | ---------------- | ---------------------- | ---------------------------------------------------------- |
 | Default          | `default`              | No vertical borders, horizontal separators, column spacing |
@@ -147,32 +146,26 @@ AppendixTable_1.setStyleConfig(
   "showGrid": false,
   "stickyHeader": true,
   "columnGap": "12px",
-  "showTotal": false
+  "showTotal": false,
+  "headerLineColor": "#354a5f",
+  "headerLineWidth": "1px",
+  "rowLineColor": "#d0d0d0",
+  "rowLineWidth": "1px",
+  "totalLineColor": "#354a5f",
+  "totalLineWidth": "1px"
 }
 ```
-
-### Key Fields
-
-| Field             | Description                                 |
-| ----------------- | ------------------------------------------- |
-| `template`        | `default`, `report`, `alternating`, `basic` |
-| `columnWidthMode` | `auto`, `manual`                            |
-| `rowHeight`       | `compact`, `default`, `comfortable`         |
-| `columnGap`       | Space between columns (SAC-like spacing)    |
-| `showGrid`        | Enables full grid (mainly for `basic`)      |
-| `stickyHeader`    | Keeps header fixed                          |
-| `showTotal`       | Enables total row                           |
 
 ---
 
 ## 🎯 Styling Behavior
 
-* Default and Report templates do NOT use grid borders
-* Only horizontal row separators are rendered
-* Header bottom border is stronger (SAC-like)
-* Column spacing replaces vertical borders
-* Alternating uses row background instead of borders
-* Basic uses full grid
+* Default and Report templates do NOT use grid borders  
+* Only horizontal row separators are rendered  
+* Header line is stronger (SAC-like)  
+* Column spacing replaces vertical borders  
+* Alternating uses row background instead of borders  
+* Basic uses full grid  
 
 ---
 
@@ -195,8 +188,8 @@ AppendixTable_1.setColumns(
 
 Supported:
 
-* `sum`
-* `count`
+* sum  
+* count  
 
 ---
 
@@ -210,15 +203,15 @@ AppendixTable_1.setRules(
 );
 ```
 
-### Operators
+Operators:
 
-* `equals`
-* `notEquals`
-* `contains`
-* `startsWith`
-* `endsWith`
-* `empty`
-* `notEmpty`
+* equals  
+* notEquals  
+* contains  
+* startsWith  
+* endsWith  
+* empty  
+* notEmpty  
 
 ---
 
@@ -246,28 +239,159 @@ AppendixTable_1.setRows(
 
 ---
 
-## ⚠️ Notes
+## 🔌 DataSource Binding (Recommended)
 
-* Data must be passed as JSON string
-* `JSON.stringify` may not work in SAC scripting
-* Widget JS must be publicly accessible (HTTPS)
-* Version change required when updating JSON
+### Step 1 – Script Object
+
+Create Script Object named:
+
+Helper
 
 ---
 
-## 🔐 Security
+### Step 2 – Helper Functions
 
-For production:
+```javascript
+function appendixEscape(value: string) : string {
 
-* Use controlled hosting
-* Add license validation
-* Restrict by tenant if needed
+    if (value === undefined) {
+        return "";
+    }
+
+    var s = value;
+
+    s = s.replace("\\", "\\\\");
+    s = s.replace("\"", "\\\"");
+
+    return s;
+}
+```
+
+```javascript
+function appendixBindDataSource(widget: com.company.sac.appendix.table_1, dataSource: DataSource) : void {
+
+    var rs = dataSource.getResultSet();
+
+    if (rs.length === 0) {
+        widget.setRows("[]");
+        return;
+    }
+
+    var keys = ArrayUtils.create(Type.string);
+    var keyIndex = 0;
+
+    for (var k in rs[0]) {
+        if (k !== "@MeasureDimension") {
+            keys[keyIndex] = k;
+            keyIndex = keyIndex + 1;
+        }
+    }
+
+    var columns = "[";
+
+    for (var c = 0; c < keys.length; c++) {
+        columns = columns +
+            '{"key":"' + keys[c] + '","title":"' + keys[c] + '"},';
+    }
+
+    columns = columns +
+        '{"key":"value","title":"Value","format":"number","total":"sum"}]';
+
+    var rows = "[";
+
+    for (var r = 0; r < rs.length; r++) {
+
+        rows = rows + "{";
+
+        for (var i = 0; i < keys.length; i++) {
+
+            var dimKey = keys[i];
+            var dimCell = rs[r][dimKey];
+            var dimValue = "";
+
+            if (dimCell.description !== undefined) {
+                dimValue = dimCell.description;
+            } else if (dimCell.id !== undefined) {
+                dimValue = dimCell.id;
+            }
+
+            rows = rows +
+                '"' + dimKey + '":"' + Helper.appendixEscape(dimValue) + '",';
+        }
+
+        var measureCell = rs[r]["@MeasureDimension"];
+        var dataValue = "";
+
+        if (measureCell.formattedValue !== undefined) {
+            dataValue = measureCell.formattedValue;
+        } else if (measureCell.rawValue !== undefined) {
+            dataValue = measureCell.rawValue;
+        }
+
+        rows = rows +
+            '"value":"' + Helper.appendixEscape(dataValue) + '"';
+
+        rows = rows + "}";
+
+        if (r < rs.length - 1) {
+            rows = rows + ",";
+        }
+    }
+
+    rows = rows + "]";
+
+    widget.setColumns(columns);
+    widget.setRows(rows);
+}
+```
+
+---
+
+## ▶️ Initialization
+
+```javascript
+var ds0 = HELPER_TABLE.getDataSource();
+Helper.appendixBindDataSource(AppendixTable_1, ds0);
+```
+
+---
+
+## 🎨 Styling Example
+
+```javascript
+var cfg =
+  '{' +
+  '"template":"default",' +
+  '"rowHeight":"compact",' +
+  '"columnGap":"12px",' +
+  '"headerColor":"#354a5f",' +
+  '"headerLineColor":"#354a5f",' +
+  '"headerLineWidth":"1px",' +
+  '"rowLineColor":"#d0d0d0",' +
+  '"rowLineWidth":"1px",' +
+  '"totalLineColor":"#354a5f",' +
+  '"totalLineWidth":"1px",' +
+  '"showTotal":true,' +
+  '"totalLabel":"Total"' +
+  '}';
+
+AppendixTable_1.setStyleConfig(cfg);
+```
+
+---
+
+## ⚠️ Notes
+
+* Data must be passed as JSON string  
+* `JSON.stringify` may not work in SAC scripting  
+* Widget JS must be publicly accessible (HTTPS)  
+* Version change required when updating JSON  
 
 ---
 
 ## 📄 Version
 
-`1.3.1`
+1.3.5
 
 ---
 
