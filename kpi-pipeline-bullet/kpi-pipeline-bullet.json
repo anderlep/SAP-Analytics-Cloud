@@ -66,13 +66,7 @@
     },
     "varianceDisplayMode": {
       "type": "string",
-      "default": "both",
-      "values": [
-        "both",
-        "raw",
-        "percent",
-        "none"
-      ]
+      "default": "both"
     },
     "varianceSeparator": {
       "type": "string",
