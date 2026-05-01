@@ -3,7 +3,10 @@
     constructor() {
       super();
       this.attachShadow({ mode: "open" });
+
       this._rows = "[]";
+      this._columns = "";
+      this._config = '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
     }
 
     connectedCallback() {
@@ -19,8 +22,36 @@
       this.render();
     }
 
+    get config() {
+      return this._config;
+    }
+
+    set config(value) {
+      this._config = value || '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
+      this.render();
+    }
+
+    get columns() {
+      return this._columns;
+    }
+
+    set columns(value) {
+      this._columns = value || "";
+      this.render();
+    }
+
     setRows(rows) {
       this._rows = rows || "[]";
+      this.render();
+    }
+
+    setConfig(config) {
+      this._config = config || '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
+      this.render();
+    }
+
+    setColumns(columns) {
+      this._columns = columns || "";
       this.render();
     }
 
@@ -45,33 +76,125 @@
     _parseRows() {
       try {
         var parsed = JSON.parse(this._rows || "[]");
-        if (!Array.isArray(parsed)) {
-          return [];
-        }
-        return parsed;
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         return [];
       }
     }
 
-    render() {
-      var rows = this._parseRows();
+    _parseConfig() {
+      try {
+        var parsed = JSON.parse(this._config || "{}");
 
-      var bodyHtml = "";
+        return {
+          label: parsed.label || "Filter",
+          op: parsed.op || "Operator",
+          value: parsed.value || "Value",
+          showOperator: parsed.showOperator !== false,
+          emptyText: parsed.emptyText || "Nejsou dostupná žádná data."
+        };
+      } catch (e) {
+        return {
+          label: "Filter",
+          op: "Operator",
+          value: "Value",
+          showOperator: true,
+          emptyText: "Nejsou dostupná žádná data."
+        };
+      }
+    }
+
+    _parseColumns(config) {
+      try {
+        var parsed = JSON.parse(this._columns || "[]");
+
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
+            .filter(function (column) {
+              return column && column.key;
+            })
+            .map(function (column) {
+              return {
+                key: column.key,
+                title: column.title || column.key,
+                width: column.width || "",
+                className: column.className || ""
+              };
+            });
+        }
+      } catch (e) {}
+
+      if (config.showOperator) {
+        return [
+          { key: "label", title: config.label, width: "35%", className: "label" },
+          { key: "op", title: config.op, width: "15%", className: "operator" },
+          { key: "value", title: config.value, width: "50%", className: "value" }
+        ];
+      }
+
+      return [
+        { key: "label", title: config.label, width: "40%", className: "label" },
+        { key: "value", title: config.value, width: "60%", className: "value" }
+      ];
+    }
+
+    _buildHeaderHtml(columns) {
+      var html = "";
+
+      for (var i = 0; i < columns.length; i++) {
+        var width = columns[i].width
+          ? ' style="width:' + this._escapeHtml(columns[i].width) + ';"'
+          : "";
+
+        html += "<th" + width + ">" + this._escapeHtml(columns[i].title) + "</th>";
+      }
+
+      return html;
+    }
+
+    _buildBodyHtml(rows, columns, config) {
+      var html = "";
 
       if (rows.length === 0) {
-        bodyHtml =
-          '<tr><td colspan="3" class="empty">Nejsou dostupná žádná data.</td></tr>';
-      } else {
-        for (var i = 0; i < rows.length; i++) {
-          bodyHtml +=
-            "<tr>" +
-            "<td>" + this._escapeHtml(rows[i].label) + "</td>" +
-            "<td class='operator'>" + this._escapeHtml(rows[i].op) + "</td>" +
-            "<td class='value'>" + this._escapeHtml(rows[i].value) + "</td>" +
-            "</tr>";
-        }
+        return (
+          '<tr><td colspan="' +
+          columns.length +
+          '" class="empty">' +
+          this._escapeHtml(config.emptyText) +
+          "</td></tr>"
+        );
       }
+
+      for (var r = 0; r < rows.length; r++) {
+        html += "<tr>";
+
+        for (var c = 0; c < columns.length; c++) {
+          var key = columns[c].key;
+          var className = columns[c].className
+            ? ' class="' + this._escapeHtml(columns[c].className) + '"'
+            : "";
+
+          html +=
+            "<td" +
+            className +
+            ">" +
+            this._escapeHtml(rows[r] ? rows[r][key] : "") +
+            "</td>";
+        }
+
+        html += "</tr>";
+      }
+
+      return html;
+    }
+
+    render() {
+      var rows = this._parseRows();
+      var config = this._parseConfig();
+      var columns = this._parseColumns(config);
+
+      var headerHtml = this._buildHeaderHtml(columns);
+      var bodyHtml = this._buildBodyHtml(rows, columns, config);
 
       this.shadowRoot.innerHTML =
         "<style>" +
@@ -81,22 +204,15 @@
         "thead th{position:sticky;top:0;background:#f3f3f3;z-index:1;font-weight:600;border-bottom:1px solid #cfcfcf;}" +
         "th,td{border-right:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:6px 8px;text-align:left;vertical-align:top;box-sizing:border-box;}" +
         "th:last-child,td:last-child{border-right:none;}" +
-        "th:nth-child(1),td:nth-child(1){width:35%;}" +
-        "th:nth-child(2),td:nth-child(2){width:15%;}" +
-        "th:nth-child(3),td:nth-child(3){width:50%;}" +
         ".operator{white-space:nowrap;font-weight:600;}" +
         ".value{word-break:break-word;white-space:pre-wrap;}" +
         ".empty{text-align:center;color:#777;padding:16px;}" +
         "</style>" +
         "<div class='wrapper'>" +
         "<table>" +
-        "<thead>" +
-        "<tr>" +
-        "<th>Proměnná / filtr</th>" +
-        "<th>Operátor</th>" +
-        "<th>Hodnota</th>" +
-        "</tr>" +
-        "</thead>" +
+        "<thead><tr>" +
+        headerHtml +
+        "</tr></thead>" +
         "<tbody>" +
         bodyHtml +
         "</tbody>" +

@@ -1,12 +1,12 @@
 {
   "eula": "",
-  "vendor": "petr.anderle@c42.cz",
+  "vendor": "petr.anderle@mathematix.cz",
   "license": "",
   "id": "com.company.sac.appendix.table",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Appendix Table",
   "newInstancePrefix": "AppendixTable",
-  "description": "Displays current SAC variables and filters as a structured appendix table.",
+  "description": "Displays SAC variables, filters or arbitrary metadata as a configurable appendix table.",
   "webcomponents": [
     {
       "kind": "main",
@@ -19,17 +19,47 @@
   "properties": {
     "rows": {
       "type": "string",
-      "description": "JSON array with appendix rows."
+      "description": "JSON array with table rows."
+    },
+    "config": {
+      "type": "string",
+      "description": "JSON config object."
+    },
+    "columns": {
+      "type": "string",
+      "description": "JSON array with dynamic column definitions."
     }
   },
   "methods": {
     "setRows": {
-      "description": "Sets appendix rows as JSON string.",
+      "description": "Sets table rows as JSON string.",
       "parameters": [
         {
           "name": "rows",
           "type": "string",
           "description": "JSON array of rows."
+        }
+      ],
+      "returnType": "void"
+    },
+    "setConfig": {
+      "description": "Sets table config as JSON string.",
+      "parameters": [
+        {
+          "name": "config",
+          "type": "string",
+          "description": "JSON config object."
+        }
+      ],
+      "returnType": "void"
+    },
+    "setColumns": {
+      "description": "Sets dynamic columns as JSON string.",
+      "parameters": [
+        {
+          "name": "columns",
+          "type": "string",
+          "description": "JSON array of column definitions."
         }
       ],
       "returnType": "void"
