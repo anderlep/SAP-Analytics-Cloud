@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable bar/marker sizing, typography, hover variance, hover reference line and smart tooltip.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, hover variance, hover reference line and smart tooltip.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -159,6 +159,34 @@
     "responsiveScaling": {
       "type": "boolean",
       "default": false
+    },
+    "paddingTop": {
+      "type": "number",
+      "default": 34
+    },
+    "paddingLeft": {
+      "type": "number",
+      "default": 28
+    },
+    "paddingRight": {
+      "type": "number",
+      "default": 28
+    },
+    "paddingBottom": {
+      "type": "number",
+      "default": 24
+    },
+    "semanticRules": {
+      "type": "string",
+      "default": "[]"
+    },
+    "semanticIconVisible": {
+      "type": "boolean",
+      "default": true
+    },
+    "semanticIconPosition": {
+      "type": "string",
+      "default": "before"
     },
     "rawDecimals": {
       "type": "number",

@@ -137,6 +137,15 @@
 
         responsiveScaling: false,
 
+        paddingTop: 34,
+        paddingLeft: 28,
+        paddingRight: 28,
+        paddingBottom: 24,
+
+        semanticRules: [],
+        semanticIconVisible: true,
+        semanticIconPosition: "before",
+
         rawDecimals: 0,
         percentDecimals: 1,
         unit: "",
@@ -181,6 +190,13 @@
         "axis-font-size",
         "marker-font-size",
         "responsive-scaling",
+        "padding-top",
+        "padding-left",
+        "padding-right",
+        "padding-bottom",
+        "semantic-rules",
+        "semantic-icon-visible",
+        "semantic-icon-position",
         "raw-decimals",
         "percent-decimals",
         "unit",
@@ -231,6 +247,21 @@
 
     _parseValue(prop, value) {
       if (value === null || value === undefined) {
+        return this._state[prop];
+      }
+
+      if (Array.isArray(this._state[prop])) {
+        if (Array.isArray(value)) return value;
+
+        if (typeof value === "string") {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : this._state[prop];
+          } catch (e) {
+            return this._state[prop];
+          }
+        }
+
         return this._state[prop];
       }
 
@@ -356,6 +387,27 @@
     get responsiveScaling() { return this._state.responsiveScaling; }
     set responsiveScaling(v) { this._set("responsiveScaling", v); }
 
+    get paddingTop() { return this._state.paddingTop; }
+    set paddingTop(v) { this._set("paddingTop", v); }
+
+    get paddingLeft() { return this._state.paddingLeft; }
+    set paddingLeft(v) { this._set("paddingLeft", v); }
+
+    get paddingRight() { return this._state.paddingRight; }
+    set paddingRight(v) { this._set("paddingRight", v); }
+
+    get paddingBottom() { return this._state.paddingBottom; }
+    set paddingBottom(v) { this._set("paddingBottom", v); }
+
+    get semanticRules() { return this._state.semanticRules; }
+    set semanticRules(v) { this._set("semanticRules", v); }
+
+    get semanticIconVisible() { return this._state.semanticIconVisible; }
+    set semanticIconVisible(v) { this._set("semanticIconVisible", v); }
+
+    get semanticIconPosition() { return this._state.semanticIconPosition; }
+    set semanticIconPosition(v) { this._set("semanticIconPosition", v); }
+
     get rawDecimals() { return this._state.rawDecimals; }
     set rawDecimals(v) { this._set("rawDecimals", v); }
 
@@ -416,6 +468,92 @@
           this._root.innerHTML = '<div class="error">Invalid config JSON.</div>';
         }
       }
+    }
+
+
+    _getSemanticValue(metric, context) {
+      if (!metric) return NaN;
+
+      switch (String(metric)) {
+        case "actualValue":
+        case "actual":
+          return context.actual;
+        case "referenceValue":
+        case "reference":
+          return context.reference;
+        case "varianceRaw":
+        case "variance":
+          return context.varianceRaw;
+        case "variancePercent":
+        case "variancePct":
+          return context.variancePct;
+        default:
+          return NaN;
+      }
+    }
+
+    _matchesSemanticRule(rule, context) {
+      if (!rule || typeof rule !== "object") return false;
+
+      const operator = String(rule.operator || "eq").toLowerCase();
+      const actualValue = this._getSemanticValue(rule.metric, context);
+      const compareValue = Number(rule.value);
+      const minValue = Number(rule.min);
+      const maxValue = Number(rule.max);
+
+      if (!Number.isFinite(actualValue)) return false;
+
+      switch (operator) {
+        case "lt":
+          return Number.isFinite(compareValue) && actualValue < compareValue;
+        case "lte":
+        case "le":
+          return Number.isFinite(compareValue) && actualValue <= compareValue;
+        case "gt":
+          return Number.isFinite(compareValue) && actualValue > compareValue;
+        case "gte":
+        case "ge":
+          return Number.isFinite(compareValue) && actualValue >= compareValue;
+        case "eq":
+          return Number.isFinite(compareValue) && actualValue === compareValue;
+        case "ne":
+        case "neq":
+          return Number.isFinite(compareValue) && actualValue !== compareValue;
+        case "between":
+          return Number.isFinite(minValue) && Number.isFinite(maxValue) && actualValue >= minValue && actualValue <= maxValue;
+        case "outside":
+          return Number.isFinite(minValue) && Number.isFinite(maxValue) && (actualValue < minValue || actualValue > maxValue);
+        default:
+          return false;
+      }
+    }
+
+    _getSemanticRule(context) {
+      const rules = Array.isArray(this._state.semanticRules) ? this._state.semanticRules : [];
+
+      for (let i = 0; i < rules.length; i += 1) {
+        if (this._matchesSemanticRule(rules[i], context)) {
+          return rules[i];
+        }
+      }
+
+      return null;
+    }
+
+    _getSemanticText(rule) {
+      if (!rule || !this._state.semanticIconVisible || !rule.icon) return "";
+      return this._escapeHtml(rule.icon);
+    }
+
+    _formatMarkerLabel(value, rule) {
+      const valueText = this._escapeHtml(this._formatNumber(value, this._state.rawDecimals));
+      const icon = this._getSemanticText(rule);
+
+      if (!icon) return valueText;
+
+      return this._state.semanticIconPosition === "after"
+        ? `${valueText} ${icon}`
+        : `${icon} ${valueText}`;
     }
 
     _formatNumber(value, decimals) {
@@ -583,19 +721,34 @@
       this._tooltipArrow = null;
     }
 
-    _attachTooltipHandlers(actual, ref, varianceRaw, variancePct) {
+    _attachTooltipHandlers(actual, ref, varianceRaw, variancePct, semanticRule) {
       const marker = this.shadowRoot.querySelector(".marker-hit");
 
       if (!marker) return;
 
+      const semanticIcon = this._getSemanticText(semanticRule);
+      const semanticLabel = semanticRule && semanticRule.label
+        ? this._escapeHtml(semanticRule.label)
+        : "";
+
+      const semanticRow = (semanticIcon || semanticLabel) ? `
+          <div style="color:#d9d9d9;">Status</div>
+          <div style="font-weight:700;text-align:right;color:${this._escapeHtml(semanticRule.tooltipTextColor || semanticRule.textColor || "#ffffff")};">
+            ${semanticIcon}${semanticIcon && semanticLabel ? " " : ""}${semanticLabel}
+          </div>
+      ` : "";
+
       const html = `
         <div style="display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:4px;align-items:center;">
           <div style="color:#d9d9d9;">Actual</div>
-          <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatNumber(actual, this._state.rawDecimals))}</div>
+          <div style="font-weight:700;text-align:right;color:${this._escapeHtml(semanticRule && semanticRule.textColor ? semanticRule.textColor : "#ffffff")};">
+            ${this._formatMarkerLabel(actual, semanticRule)}
+          </div>
           <div style="color:#d9d9d9;">Reference</div>
           <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatNumber(ref, this._state.rawDecimals))}</div>
           <div style="color:#d9d9d9;">Variance</div>
           <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatVariance(varianceRaw, variancePct))}</div>
+          ${semanticRow}
         </div>
       `;
 
@@ -657,10 +810,12 @@
       const height = Math.max(this.clientHeight || 120, 90);
 
       const margin = {
-        left: 28,
-        right: 28,
-        top: 34,
-        bottom: s.showAxisLabels ? 46 : 24
+        left: Math.max(0, Number(s.paddingLeft)),
+        right: Math.max(0, Number(s.paddingRight)),
+        top: Math.max(0, Number(s.paddingTop)),
+        bottom: s.showAxisLabels
+          ? Math.max(Number(s.paddingBottom), Math.max(30, Number(s.axisFontSize) + 22))
+          : Math.max(0, Number(s.paddingBottom))
       };
 
       const plotX = margin.left;
@@ -699,6 +854,21 @@
 
       const varianceRaw = actual - ref;
       const variancePct = ref !== 0 ? varianceRaw / ref : null;
+
+      const semanticContext = {
+        actual,
+        reference: ref,
+        varianceRaw,
+        variancePct
+      };
+      const semanticRule = this._getSemanticRule(semanticContext);
+      const effectiveMarkerColor = semanticRule && semanticRule.markerColor ? semanticRule.markerColor : s.markerColor;
+      const effectiveTextColor = semanticRule && semanticRule.textColor ? semanticRule.textColor : effectiveMarkerColor;
+      const effectiveFontWeight = semanticRule && semanticRule.fontWeight ? semanticRule.fontWeight : s.fontWeight;
+      const effectiveFontStyle = semanticRule && semanticRule.fontStyle ? semanticRule.fontStyle : s.fontStyle;
+      const semanticBackgroundColor = semanticRule && semanticRule.backgroundColor ? semanticRule.backgroundColor : "transparent";
+
+      this._root.style.backgroundColor = semanticBackgroundColor;
 
       const arrowDir = actual >= ref ? 1 : -1;
       const arrowStartX = arrowDir > 0 ? xRef : xActual;
@@ -751,11 +921,11 @@
             </g>
           ` : ""}
 
-          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="${markerWidth}"></line>
-          <circle cx="${xActual}" cy="${markerTop}" r="${Math.max(markerRadius + 2, 6)}" fill="${s.markerColor}" class="marker-hit"></circle>
+          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${effectiveMarkerColor}" stroke-width="${markerWidth}"></line>
+          <circle cx="${xActual}" cy="${markerTop}" r="${Math.max(markerRadius + 2, 6)}" fill="${effectiveMarkerColor}" class="marker-hit"></circle>
 
           ${outsideHint ? `
-            <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
+            <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${effectiveTextColor}">
               ${outsideHint}
             </text>
           ` : ""}
@@ -765,7 +935,7 @@
                   text-anchor="middle"
                   font-size="${valueFont}"
                   fill="${s.markerColor}">
-              ${this._formatNumber(actual, s.rawDecimals)}
+              ${this._formatMarkerLabel(actual, semanticRule)}
             </text>
           ` : ""}
 
@@ -778,7 +948,7 @@
         </svg>
       `;
 
-      this._attachTooltipHandlers(actual, ref, varianceRaw, variancePct);
+      this._attachTooltipHandlers(actual, ref, varianceRaw, variancePct, semanticRule);
     }
   }
 
