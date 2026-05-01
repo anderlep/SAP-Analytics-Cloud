@@ -613,7 +613,7 @@
       return html;
     }
 
-    _buildBodyHtml(rows, columns, config, rules) {
+    _buildBodyHtml(rows, columns, config, rules, styleConfig) {
       var html = "";
 
       if (rows.length === 0) {
@@ -630,7 +630,12 @@
         var rowStyle = this._getRowRuleStyle(rules, rows[r]);
         var rowStyleAttribute = rowStyle ? ' style="' + rowStyle + '"' : "";
 
-        html += "<tr" + rowStyleAttribute + ">";
+        var rowClass =
+          styleConfig.showTotal && r === rows.length - 1
+            ? ' class="before-total"'
+            : "";
+
+        html += "<tr" + rowClass + rowStyleAttribute + ">";
 
         for (var c = 0; c < columns.length; c++) {
           var key = columns[c].key;
@@ -811,12 +816,14 @@
             ";}"
           : "") +
 
+        "tbody tr.before-total td{border-bottom:none;}" +
+
         ".total-row td{" +
         "font-weight:700;" +
         "border-top:" +
         totalLine +
         ";" +
-        "border-bottom:none;" + // 🔥 fix dvojité čáry
+        "border-bottom:none;" + 
         "}" +
 
         ".empty{text-align:center;color:" +
@@ -848,7 +855,7 @@
       }
 
       var headerHtml = this._buildHeaderHtml(columns, styleConfig);
-      var bodyHtml = this._buildBodyHtml(rows, columns, config, rules);
+      var bodyHtml = this._buildBodyHtml(rows, columns, config, rules, styleConfig);
       var totalHtml = this._buildTotalHtml(rows, columns, styleConfig);
       var css = this._buildCss(styleConfig);
 
