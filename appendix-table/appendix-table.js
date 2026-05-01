@@ -281,11 +281,15 @@
           headerColor: "#555555",
           rowBackground: "#ffffff",
           alternateRowBackground: "",
-          borderColor: "#d9d9d9",
-          wrapperBorderColor: "#d9d9d9",
+          borderColor: "#d0d0d0",
+          headerBorderColor: "#354a5f",
+          wrapperBorderColor: "transparent",
           textColor: "#555555",
           emptyTextColor: "#777777",
-          showGrid: true,
+          showGrid: false,
+          showHorizontalLines: true,
+          showVerticalLines: false,
+          columnGap: "12px",
           stickyHeader: true,
           headerFontWeight: "600"
         },
@@ -298,10 +302,14 @@
           rowBackground: "#ffffff",
           alternateRowBackground: "",
           borderColor: "#c9c9c9",
-          wrapperBorderColor: "#ffffff",
+          headerBorderColor: "#354a5f",
+          wrapperBorderColor: "transparent",
           textColor: "#555555",
           emptyTextColor: "#777777",
           showGrid: false,
+          showHorizontalLines: true,
+          showVerticalLines: false,
+          columnGap: "12px",
           stickyHeader: true,
           headerFontWeight: "600"
         },
@@ -309,15 +317,19 @@
         alternating: {
           fontSize: "12px",
           fontFamily: "Arial, Helvetica, sans-serif",
-          headerBackground: "#f3f3f3",
-          headerColor: "#333333",
+          headerBackground: "#ffffff",
+          headerColor: "#555555",
           rowBackground: "#ffffff",
-          alternateRowBackground: "#f7f7f7",
-          borderColor: "#d9d9d9",
-          wrapperBorderColor: "#d9d9d9",
-          textColor: "#333333",
+          alternateRowBackground: "#f2f2f2",
+          borderColor: "#ffffff",
+          headerBorderColor: "#354a5f",
+          wrapperBorderColor: "transparent",
+          textColor: "#555555",
           emptyTextColor: "#777777",
-          showGrid: true,
+          showGrid: false,
+          showHorizontalLines: false,
+          showVerticalLines: false,
+          columnGap: "0px",
           stickyHeader: true,
           headerFontWeight: "600"
         },
@@ -325,17 +337,21 @@
         basic: {
           fontSize: "12px",
           fontFamily: "Arial, Helvetica, sans-serif",
-          headerBackground: "#ffffff",
+          headerBackground: "#f3f3f3",
           headerColor: "#333333",
           rowBackground: "#ffffff",
           alternateRowBackground: "",
-          borderColor: "#e5e5e5",
+          borderColor: "#d9d9d9",
+          headerBorderColor: "#d9d9d9",
           wrapperBorderColor: "#d9d9d9",
           textColor: "#333333",
           emptyTextColor: "#777777",
           showGrid: true,
+          showHorizontalLines: true,
+          showVerticalLines: true,
+          columnGap: "0px",
           stickyHeader: true,
-          headerFontWeight: "400"
+          headerFontWeight: "600"
         }
       };
 
@@ -358,8 +374,7 @@
         template: template,
         fontSize: parsed.fontSize || preset.fontSize,
         fontFamily: parsed.fontFamily || preset.fontFamily,
-        headerBackground:
-          parsed.headerBackground || preset.headerBackground,
+        headerBackground: parsed.headerBackground || preset.headerBackground,
         headerColor: parsed.headerColor || preset.headerColor,
         rowBackground: parsed.rowBackground || preset.rowBackground,
         alternateRowBackground:
@@ -367,6 +382,8 @@
             ? parsed.alternateRowBackground
             : preset.alternateRowBackground,
         borderColor: parsed.borderColor || preset.borderColor,
+        headerBorderColor:
+          parsed.headerBorderColor || preset.headerBorderColor,
         wrapperBorderColor:
           parsed.wrapperBorderColor || preset.wrapperBorderColor,
         textColor: parsed.textColor || preset.textColor,
@@ -374,6 +391,16 @@
         rowHeight: parsed.rowHeight || "default",
         showGrid:
           parsed.showGrid !== undefined ? parsed.showGrid : preset.showGrid,
+        showHorizontalLines:
+          parsed.showHorizontalLines !== undefined
+            ? parsed.showHorizontalLines
+            : preset.showHorizontalLines,
+        showVerticalLines:
+          parsed.showVerticalLines !== undefined
+            ? parsed.showVerticalLines
+            : preset.showVerticalLines,
+        columnGap:
+          parsed.columnGap !== undefined ? parsed.columnGap : preset.columnGap,
         stickyHeader:
           parsed.stickyHeader !== undefined
             ? parsed.stickyHeader
@@ -476,8 +503,10 @@
       }
 
       if (operator === "endsWith") {
-        return cellValue.lastIndexOf(ruleValue) ===
-          cellValue.length - ruleValue.length;
+        return (
+          cellValue.lastIndexOf(ruleValue) ===
+          cellValue.length - ruleValue.length
+        );
       }
 
       if (operator === "empty") {
@@ -646,10 +675,7 @@
           hasTotal = true;
         }
 
-        html +=
-          "<td>" +
-          this._escapeHtml(value) +
-          "</td>";
+        html += "<td>" + this._escapeHtml(value) + "</td>";
       }
 
       html += "</tr>";
@@ -683,9 +709,13 @@
         styleConfig.borderColor,
         "#e5e5e5"
       );
+      var headerBorderColor = this._safeCssValue(
+        styleConfig.headerBorderColor,
+        borderColor
+      );
       var wrapperBorderColor = this._safeCssValue(
         styleConfig.wrapperBorderColor,
-        "#d9d9d9"
+        "transparent"
       );
       var textColor = this._safeCssValue(styleConfig.textColor, "#333333");
       var emptyTextColor = this._safeCssValue(
@@ -700,14 +730,34 @@
         this._getPadding(styleConfig),
         "6px 8px"
       );
-      var gridBorder = styleConfig.showGrid
-        ? "1px solid " + borderColor
-        : "none";
+      var tableLayout =
+        styleConfig.columnWidthMode === "manual" ? "fixed" : "auto";
+
+      var horizontalBorder =
+        styleConfig.showGrid || styleConfig.showHorizontalLines
+          ? "1px solid " + borderColor
+          : "none";
+
+      var verticalBorder =
+        styleConfig.showGrid || styleConfig.showVerticalLines
+          ? "1px solid " + borderColor
+          : "none";
+
+      var headerBorder = "2px solid " + headerBorderColor;
+
+      var columnGap = this._safeCssValue(styleConfig.columnGap, "0px");
+      var useColumnGap = columnGap !== "0px" && columnGap !== "0";
+      var borderCollapse = useColumnGap ? "separate" : "collapse";
+      var borderSpacing = useColumnGap ? columnGap + " 0" : "0";
+
       var stickyHeader = styleConfig.stickyHeader
         ? "position:sticky;top:0;"
         : "";
-      var tableLayout =
-        styleConfig.columnWidthMode === "manual" ? "fixed" : "auto";
+
+      var wrapperBorder =
+        wrapperBorderColor === "transparent"
+          ? "none"
+          : "1px solid " + wrapperBorderColor;
 
       return (
         ":host{display:block;width:100%;height:100%;box-sizing:border-box;font-family:" +
@@ -715,12 +765,16 @@
         ";color:" +
         textColor +
         ";}" +
-        ".wrapper{width:100%;height:100%;overflow:auto;box-sizing:border-box;border:1px solid " +
-        wrapperBorderColor +
+        ".wrapper{width:100%;height:100%;overflow:auto;box-sizing:border-box;border:" +
+        wrapperBorder +
         ";background:" +
         rowBackground +
         ";}" +
-        "table{width:100%;border-collapse:collapse;font-size:" +
+        "table{width:100%;border-collapse:" +
+        borderCollapse +
+        ";border-spacing:" +
+        borderSpacing +
+        ";font-size:" +
         fontSize +
         ";table-layout:" +
         tableLayout +
@@ -733,13 +787,13 @@
         headerColor +
         ";z-index:1;font-weight:" +
         headerFontWeight +
-        ";border-bottom:1px solid " +
-        borderColor +
+        ";border-bottom:" +
+        headerBorder +
         ";}" +
         "th,td{border-right:" +
-        gridBorder +
+        verticalBorder +
         ";border-bottom:" +
-        gridBorder +
+        horizontalBorder +
         ";padding:" +
         padding +
         ";text-align:left;vertical-align:top;box-sizing:border-box;}" +
@@ -760,7 +814,7 @@
         emptyTextColor +
         ";padding:16px;}" +
         ".total-row td{font-weight:700;border-top:2px solid " +
-        borderColor +
+        headerBorderColor +
         ";}" +
         this._customCss
       );
