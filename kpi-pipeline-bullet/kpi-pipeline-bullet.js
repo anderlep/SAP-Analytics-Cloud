@@ -34,6 +34,17 @@
         font-size: 12px;
         padding: 8px;
       }
+      .variance-layer {
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+        pointer-events: none;
+      }
+      :host(:hover) .variance-layer {
+        opacity: 1;
+      }
+      .variance-layer.always-visible {
+        opacity: 1;
+      }
     </style>
     <div class="root"></div>
   `;
@@ -62,15 +73,19 @@
         varianceColor: "#5E6978",
 
         showLabels: true,
-        showAxisLabels: true,
+        showMarkerLabel: true,
+        showAxisLabels: false,
         showReferenceLine: true,
-        showVarianceIndicator: true,
-        varianceDisplayMode: "both", // both | raw | percent | none
+
+        showVarianceIndicator: false,
+        varianceOnHover: true,
+        varianceLineStyle: "dashed",
+        varianceDisplayMode: "both",
         varianceSeparator: " | ",
+
         rawDecimals: 0,
         percentDecimals: 1,
         unit: "",
-        percentScale: 100,
         clampMarker: true
       };
     }
@@ -81,7 +96,8 @@
         "lower-bound-zone-percentage", "target-zone-percentage", "upper-bound-zone-percentage",
         "lower-bound-zone-color", "target-zone-color", "upper-bound-zone-color",
         "marker-color", "reference-line-color", "variance-color",
-        "show-labels", "show-axis-labels", "show-reference-line", "show-variance-indicator",
+        "show-labels", "show-marker-label", "show-axis-labels", "show-reference-line",
+        "show-variance-indicator", "variance-on-hover", "variance-line-style",
         "variance-display-mode", "variance-separator",
         "raw-decimals", "percent-decimals", "unit", "clamp-marker"
       ];
@@ -123,11 +139,16 @@
 
     _parseValue(prop, value) {
       if (value === null || value === undefined) return this._state[prop];
-      if (typeof this._state[prop] === "boolean") return value === true || value === "true";
+
+      if (typeof this._state[prop] === "boolean") {
+        return value === true || value === "true";
+      }
+
       if (typeof this._state[prop] === "number") {
         const n = Number(value);
         return Number.isFinite(n) ? n : this._state[prop];
       }
+
       return String(value);
     }
 
@@ -163,36 +184,75 @@
     get markerColor() { return this._state.markerColor; }
     set markerColor(v) { this._set("markerColor", v); }
 
-    get varianceDisplayMode() { return this._state.varianceDisplayMode; }
-    set varianceDisplayMode(v) { this._set("varianceDisplayMode", v); }
+    get referenceLineColor() { return this._state.referenceLineColor; }
+    set referenceLineColor(v) { this._set("referenceLineColor", v); }
+
+    get varianceColor() { return this._state.varianceColor; }
+    set varianceColor(v) { this._set("varianceColor", v); }
+
+    get showLabels() { return this._state.showLabels; }
+    set showLabels(v) { this._set("showLabels", v); }
+
+    get showMarkerLabel() { return this._state.showMarkerLabel; }
+    set showMarkerLabel(v) { this._set("showMarkerLabel", v); }
+
+    get showAxisLabels() { return this._state.showAxisLabels; }
+    set showAxisLabels(v) { this._set("showAxisLabels", v); }
+
+    get showReferenceLine() { return this._state.showReferenceLine; }
+    set showReferenceLine(v) { this._set("showReferenceLine", v); }
 
     get showVarianceIndicator() { return this._state.showVarianceIndicator; }
     set showVarianceIndicator(v) { this._set("showVarianceIndicator", v); }
 
-    // Convenience API for Analytics Designer scripting.
+    get varianceOnHover() { return this._state.varianceOnHover; }
+    set varianceOnHover(v) { this._set("varianceOnHover", v); }
+
+    get varianceLineStyle() { return this._state.varianceLineStyle; }
+    set varianceLineStyle(v) { this._set("varianceLineStyle", v); }
+
+    get varianceDisplayMode() { return this._state.varianceDisplayMode; }
+    set varianceDisplayMode(v) { this._set("varianceDisplayMode", v); }
+
+    get varianceSeparator() { return this._state.varianceSeparator; }
+    set varianceSeparator(v) { this._set("varianceSeparator", v); }
+
+    get rawDecimals() { return this._state.rawDecimals; }
+    set rawDecimals(v) { this._set("rawDecimals", v); }
+
+    get percentDecimals() { return this._state.percentDecimals; }
+    set percentDecimals(v) { this._set("percentDecimals", v); }
+
+    get unit() { return this._state.unit; }
+    set unit(v) { this._set("unit", v); }
+
+    get clampMarker() { return this._state.clampMarker; }
+    set clampMarker(v) { this._set("clampMarker", v); }
+
     setData(actualValue, referenceValue) {
-      this.actualValue = actualValue;
-      this.referenceValue = referenceValue;
+      this._state.actualValue = Number(actualValue);
+      this._state.referenceValue = Number(referenceValue);
+      this.render();
     }
 
     setZones(lowerBoundZonePercentage, targetZonePercentage, upperBoundZonePercentage) {
-      this.lowerBoundZonePercentage = lowerBoundZonePercentage;
-      this.targetZonePercentage = targetZonePercentage;
-      this.upperBoundZonePercentage = upperBoundZonePercentage;
+      this._state.lowerBoundZonePercentage = Number(lowerBoundZonePercentage);
+      this._state.targetZonePercentage = Number(targetZonePercentage);
+      this._state.upperBoundZonePercentage = Number(upperBoundZonePercentage);
+      this.render();
     }
 
     setColors(lowerBoundZoneColor, targetZoneColor, upperBoundZoneColor, markerColor) {
-      this.lowerBoundZoneColor = lowerBoundZoneColor;
-      this.targetZoneColor = targetZoneColor;
-      this.upperBoundZoneColor = upperBoundZoneColor;
-      if (markerColor !== undefined) this.markerColor = markerColor;
+      this._state.lowerBoundZoneColor = String(lowerBoundZoneColor);
+      this._state.targetZoneColor = String(targetZoneColor);
+      this._state.upperBoundZoneColor = String(upperBoundZoneColor);
+      if (markerColor !== undefined) this._state.markerColor = String(markerColor);
+      this.render();
     }
 
     setVarianceDisplayMode(mode) {
       const allowed = ["both", "raw", "percent", "none"];
-      const safeMode = allowed.includes(mode) ? mode : "both";
-
-      this._state.varianceDisplayMode = safeMode;
+      this._state.varianceDisplayMode = allowed.includes(mode) ? mode : "both";
       this.render();
     }
 
@@ -210,6 +270,7 @@
 
       const signRaw = raw > 0 ? "+" : "";
       const signPct = pct > 0 ? "+" : "";
+
       const rawText = `${signRaw}${this._formatNumber(raw, this._state.rawDecimals)}`;
       const pctText = Number.isFinite(pct)
         ? `${signPct}${(pct * 100).toLocaleString(undefined, {
@@ -240,7 +301,7 @@
       }
 
       if (Math.round(pctSum * 1000) / 1000 !== 100) {
-        this._root.innerHTML = `<div class="error">Invalid configuration: lowerBoundZonePercentage + targetZonePercentage + upperBoundZonePercentage must equal 100. Current sum: ${pctSum}.</div>`;
+        this._root.innerHTML = `<div class="error">Invalid configuration: zone percentages must equal 100. Current sum: ${pctSum}.</div>`;
         return;
       }
 
@@ -262,12 +323,25 @@
       const width = Math.max(this.clientWidth || 320, 160);
       const height = Math.max(this.clientHeight || 120, 90);
 
-      const margin = { left: 28, right: 28, top: 22, bottom: s.showAxisLabels ? 32 : 16 };
+      const margin = {
+        left: 28,
+        right: 28,
+        top: 34,
+        bottom: s.showAxisLabels ? 46 : 24
+      };
+
       const plotX = margin.left;
       const plotW = Math.max(width - margin.left - margin.right, 80);
-      const barY = Math.max(34, height * 0.42);
+
+      const barY = Math.max(42, height * 0.38);
       const barH = Math.min(24, Math.max(14, height * 0.16));
-      const varianceY = barY - 14;
+      const varianceY = barY - 24;
+      const axisLabelY = height - 8;
+      const markerTop = barY - 10;
+      const markerBottom = barY + barH + 10;
+      const markerLabelY = s.showAxisLabels
+        ? Math.min(axisLabelY - 18, markerBottom + 18)
+        : Math.min(height - 8, markerBottom + 18);
 
       const scale = (value) => plotX + ((value - axisMin) / axisRange) * plotW;
       const clamp = (x) => Math.max(plotX, Math.min(plotX + plotW, x));
@@ -283,14 +357,14 @@
       const variancePct = ref !== 0 ? varianceRaw / ref : null;
       const varianceLabel = this._formatVariance(varianceRaw, variancePct);
 
-      const arrowStart = clamp(Math.min(xActual, xRef));
-      const arrowEnd = clamp(Math.max(xActual, xRef));
       const arrowDir = actual >= ref ? 1 : -1;
-      const arrowLength = Math.abs(arrowEnd - arrowStart);
-      const showArrow = s.showVarianceIndicator && arrowLength > 4;
+      const arrowStartX = arrowDir > 0 ? xRef : xActual;
+      const arrowEndX = arrowDir > 0 ? xActual : xRef;
+      const arrowLength = Math.abs(arrowEndX - arrowStartX);
 
-      const markerTop = barY - 10;
-      const markerBottom = barY + barH + 10;
+      const showArrow = (s.showVarianceIndicator || s.varianceOnHover) && arrowLength > 4;
+      const varianceLayerClass = s.showVarianceIndicator ? "variance-layer always-visible" : "variance-layer";
+      const dashArray = s.varianceLineStyle === "dashed" ? "3 3" : "";
 
       const labelFont = Math.max(10, Math.min(13, height * 0.1));
       const valueFont = Math.max(11, Math.min(15, height * 0.12));
@@ -300,7 +374,7 @@
       const outsideHint = outsideLeft ? "◀" : outsideRight ? "▶" : "";
 
       this._root.innerHTML = `
-        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Pipeline bullet chart">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="KPI Pipeline Bullet">
           <defs>
             <marker id="pb-arrow-head" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
               <path d="M0,0 L7,3.5 L0,7 Z" fill="${s.varianceColor}"></path>
@@ -316,28 +390,51 @@
           ` : ""}
 
           ${showArrow ? `
-            <line x1="${xActual}" y1="${barY - 6}" x2="${xActual}" y2="${varianceY + 6}" stroke="${s.varianceColor}" stroke-width="1"></line>
-            <line x1="${xRef}" y1="${barY - 6}" x2="${xRef}" y2="${varianceY + 6}" stroke="${s.varianceColor}" stroke-width="1"></line>
-            <line x1="${arrowDir > 0 ? xRef : xActual}" y1="${varianceY}" x2="${arrowDir > 0 ? xActual : xRef}" y2="${varianceY}"
-                  stroke="${s.varianceColor}" stroke-width="1.5" marker-end="url(#pb-arrow-head)"></line>
-            ${varianceLabel ? `<text x="${(xActual + xRef) / 2}" y="${varianceY - 4}" text-anchor="middle" font-size="${labelFont}" class="muted">${varianceLabel}</text>` : ""}
+            <g class="${varianceLayerClass}">
+              <line x1="${xActual}" y1="${barY - 7}" x2="${xActual}" y2="${varianceY + 5}"
+                    stroke="${s.varianceColor}" stroke-width="1" stroke-dasharray="${dashArray}"></line>
+
+              <line x1="${xRef}" y1="${barY - 7}" x2="${xRef}" y2="${varianceY + 5}"
+                    stroke="${s.varianceColor}" stroke-width="1" stroke-dasharray="${dashArray}"></line>
+
+              <line x1="${arrowStartX}" y1="${varianceY}"
+                    x2="${arrowEndX}" y2="${varianceY}"
+                    stroke="${s.varianceColor}" stroke-width="1.2"
+                    stroke-dasharray="${dashArray}"
+                    marker-end="url(#pb-arrow-head)"></line>
+
+              ${varianceLabel ? `
+                <text x="${xActual}" y="${varianceY - 6}"
+                      text-anchor="middle"
+                      font-size="${labelFont}"
+                      class="muted">${varianceLabel}</text>
+              ` : ""}
+            </g>
           ` : ""}
 
           <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="3"></line>
           <circle cx="${xActual}" cy="${markerTop}" r="4" fill="${s.markerColor}"></circle>
-          ${outsideHint ? `<text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">${outsideHint}</text>` : ""}
 
-          ${s.showLabels ? `
-            <text x="${xActual}" y="${Math.min(height - 6, markerBottom + 16)}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
+          ${outsideHint ? `
+            <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
+              ${outsideHint}
+            </text>
+          ` : ""}
+
+          ${(s.showLabels && s.showMarkerLabel) ? `
+            <text x="${xActual}" y="${markerLabelY}"
+                  text-anchor="middle"
+                  font-size="${valueFont}"
+                  fill="${s.markerColor}">
               ${this._formatNumber(actual, s.rawDecimals)}
             </text>
           ` : ""}
 
           ${s.showAxisLabels ? `
-            <text x="${xMin}" y="${height - 7}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMin, s.rawDecimals)}</text>
-            <text x="${xRef}" y="${height - 7}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(ref, s.rawDecimals)}</text>
-            <text x="${xTargetEnd}" y="${height - 7}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(targetEnd, s.rawDecimals)}</text>
-            <text x="${xMax}" y="${height - 7}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMax, s.rawDecimals)}</text>
+            <text x="${xMin}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMin, s.rawDecimals)}</text>
+            <text x="${xRef}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(ref, s.rawDecimals)}</text>
+            <text x="${xTargetEnd}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(targetEnd, s.rawDecimals)}</text>
+            <text x="${xMax}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMax, s.rawDecimals)}</text>
           ` : ""}
         </svg>
       `;
