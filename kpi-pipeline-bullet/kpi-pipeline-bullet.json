@@ -1,5 +1,5 @@
 {
-  "id": "com.pa.kpi-pipeline-bullet",
+  "id": "com.company.sac.kpi.pipeline.bullet",
   "version": "1.0.0",
   "name": "KPI Pipeline Bullet",
   "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker and variance indicator.",
