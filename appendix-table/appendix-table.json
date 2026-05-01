@@ -3,7 +3,7 @@
   "vendor": "petr.anderle@c42.cz",
   "license": "",
   "id": "com.company.sac.appendix.table",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "name": "Appendix Table",
   "newInstancePrefix": "AppendixTable",
   "description": "Displays SAC variables, filters or arbitrary metadata as a configurable, styleable and dynamic appendix table.",

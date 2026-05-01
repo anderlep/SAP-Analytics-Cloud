@@ -411,7 +411,15 @@
         columnWidthMode: parsed.columnWidthMode || "auto",
         showTotal: parsed.showTotal === true,
         totalLabel: parsed.totalLabel || "Total",
-        totalMode: parsed.totalMode || "sum"
+        totalMode: parsed.totalMode || "sum",
+
+        // 🔥 NOVÉ
+        rowLineColor: parsed.rowLineColor || "rgba(0,0,0,0.18)",
+        headerLineColor: parsed.headerLineColor || "#354a5f",
+        totalLineColor: parsed.totalLineColor || "#354a5f",
+        rowLineWidth: parsed.rowLineWidth || "1px",
+        headerLineWidth: parsed.headerLineWidth || "2px",
+        totalLineWidth: parsed.totalLineWidth || "2px"
       };
     }
 
@@ -689,6 +697,7 @@
         "Arial, Helvetica, sans-serif"
       );
       var fontSize = this._safeCssValue(styleConfig.fontSize, "12px");
+
       var headerBackground = this._safeCssValue(
         styleConfig.headerBackground,
         "#ffffff"
@@ -697,67 +706,56 @@
         styleConfig.headerColor,
         "#333333"
       );
+
       var rowBackground = this._safeCssValue(
         styleConfig.rowBackground,
         "#ffffff"
       );
+
       var alternateRowBackground = this._safeCssValue(
         styleConfig.alternateRowBackground,
         ""
       );
-      var borderColor = this._safeCssValue(
-        styleConfig.borderColor,
-        "#e5e5e5"
-      );
-      var headerBorderColor = this._safeCssValue(
-        styleConfig.headerBorderColor,
-        borderColor
-      );
-      var wrapperBorderColor = this._safeCssValue(
-        styleConfig.wrapperBorderColor,
-        "transparent"
-      );
+
       var textColor = this._safeCssValue(styleConfig.textColor, "#333333");
       var emptyTextColor = this._safeCssValue(
         styleConfig.emptyTextColor,
         "#777777"
       );
+
       var headerFontWeight = this._safeCssValue(
         styleConfig.headerFontWeight,
         "600"
       );
+
       var padding = this._safeCssValue(
         this._getPadding(styleConfig),
         "6px 8px"
       );
+
       var tableLayout =
         styleConfig.columnWidthMode === "manual" ? "fixed" : "auto";
-
-      var horizontalBorder =
-        styleConfig.showGrid || styleConfig.showHorizontalLines
-          ? "1px solid " + borderColor
-          : "none";
-
-      var verticalBorder =
-        styleConfig.showGrid || styleConfig.showVerticalLines
-          ? "1px solid " + borderColor
-          : "none";
-
-      var headerBorder = "2px solid " + headerBorderColor;
-
-      var columnGap = this._safeCssValue(styleConfig.columnGap, "0px");
-      var useColumnGap = columnGap !== "0px" && columnGap !== "0";
-      var borderCollapse = useColumnGap ? "separate" : "collapse";
-      var borderSpacing = useColumnGap ? columnGap + " 0" : "0";
 
       var stickyHeader = styleConfig.stickyHeader
         ? "position:sticky;top:0;"
         : "";
 
-      var wrapperBorder =
-        wrapperBorderColor === "transparent"
-          ? "none"
-          : "1px solid " + wrapperBorderColor;
+      var rowLine =
+        styleConfig.showHorizontalLines || styleConfig.showGrid
+          ? styleConfig.rowLineWidth +
+            " solid " +
+            styleConfig.rowLineColor
+          : "none";
+
+      var headerLine =
+        styleConfig.headerLineWidth +
+        " solid " +
+        styleConfig.headerLineColor;
+
+      var totalLine =
+        styleConfig.totalLineWidth +
+        " solid " +
+        styleConfig.totalLineColor;
 
       return (
         ":host{display:block;width:100%;height:100%;box-sizing:border-box;font-family:" +
@@ -765,57 +763,57 @@
         ";color:" +
         textColor +
         ";}" +
-        ".wrapper{width:100%;height:100%;overflow:auto;box-sizing:border-box;border:" +
-        wrapperBorder +
-        ";background:" +
-        rowBackground +
-        ";}" +
-        "table{width:100%;border-collapse:" +
-        borderCollapse +
-        ";border-spacing:" +
-        borderSpacing +
-        ";font-size:" +
+
+        ".wrapper{width:100%;height:100%;overflow:auto;}" +
+
+        "table{width:100%;border-collapse:collapse;font-size:" +
         fontSize +
         ";table-layout:" +
         tableLayout +
         ";}" +
+
         "thead th{" +
         stickyHeader +
         "background:" +
         headerBackground +
         ";color:" +
         headerColor +
-        ";z-index:1;font-weight:" +
+        ";font-weight:" +
         headerFontWeight +
         ";border-bottom:" +
-        headerBorder +
+        headerLine +
         ";}" +
-        "th,td{border-right:" +
-        verticalBorder +
-        ";border-bottom:" +
-        horizontalBorder +
-        ";padding:" +
+
+        "th,td{" +
+        "padding:" +
         padding +
-        ";text-align:left;vertical-align:top;box-sizing:border-box;}" +
-        "th:last-child,td:last-child{border-right:none;}" +
+        ";text-align:left;" +
+        "border-bottom:" +
+        rowLine +
+        ";}" +
+
         "tbody td{background:" +
         rowBackground +
-        ";color:" +
-        textColor +
         ";}" +
+
         (alternateRowBackground
           ? "tbody tr:nth-child(even) td{background:" +
             alternateRowBackground +
             ";}"
           : "") +
-        ".operator{white-space:nowrap;font-weight:600;}" +
-        ".value{word-break:break-word;white-space:pre-wrap;}" +
+
+        ".total-row td{" +
+        "font-weight:700;" +
+        "border-top:" +
+        totalLine +
+        ";" +
+        "border-bottom:none;" + // 🔥 fix dvojité čáry
+        "}" +
+
         ".empty{text-align:center;color:" +
         emptyTextColor +
         ";padding:16px;}" +
-        ".total-row td{font-weight:700;border-top:2px solid " +
-        headerBorderColor +
-        ";}" +
+
         this._customCss
       );
     }
