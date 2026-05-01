@@ -1,0 +1,156 @@
+{
+  "id": "com.pa.kpi-pipeline-bullet",
+  "version": "1.0.0",
+  "name": "KPI Pipeline Bullet",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker and variance indicator.",
+  "newInstancePrefix": "KpiPipelineBullet",
+  "vendor": "petr.anderle@mathematix.cz",
+  "license": "",
+  "eula": "",
+  "icon": "https://anderlep.github.io/SAP-Analytics-Cloud/kpi-pipeline-bullet/icon.png",
+  "supportsMobile": true,
+  "supportsExport": true,
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "kpi-pipeline-bullet",
+      "url": "https://anderlep.github.io/SAP-Analytics-Cloud/kpi-pipeline-bullet/kpi-pipeline-bullet.js",
+      "integrity": "",
+      "ignoreIntegrity": true
+    }
+  ],
+  "properties": {
+    "actualValue": {
+      "type": "number",
+      "default": 450
+    },
+    "referenceValue": {
+      "type": "number",
+      "default": 500
+    },
+    "lowerBoundZonePercentage": {
+      "type": "number",
+      "default": 40
+    },
+    "targetZonePercentage": {
+      "type": "number",
+      "default": 20
+    },
+    "upperBoundZonePercentage": {
+      "type": "number",
+      "default": 40
+    },
+    "lowerBoundZoneColor": {
+      "type": "string",
+      "default": "#E74C3C"
+    },
+    "targetZoneColor": {
+      "type": "string",
+      "default": "#2ECC71"
+    },
+    "upperBoundZoneColor": {
+      "type": "string",
+      "default": "#F1C40F"
+    },
+    "markerColor": {
+      "type": "string",
+      "default": "#2F3C7E"
+    },
+    "varianceColor": {
+      "type": "string",
+      "default": "#5E6978"
+    },
+    "showVarianceIndicator": {
+      "type": "boolean",
+      "default": true
+    },
+    "varianceDisplayMode": {
+      "type": "string",
+      "default": "both"
+    },
+    "varianceSeparator": {
+      "type": "string",
+      "default": " | "
+    },
+    "showLabels": {
+      "type": "boolean",
+      "default": true
+    },
+    "showAxisLabels": {
+      "type": "boolean",
+      "default": true
+    },
+    "rawDecimals": {
+      "type": "number",
+      "default": 0
+    },
+    "percentDecimals": {
+      "type": "number",
+      "default": 1
+    },
+    "unit": {
+      "type": "string",
+      "default": ""
+    },
+    "clampMarker": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "methods": {
+    "setData": {
+      "description": "Set actual and reference values.",
+      "parameters": [
+        {
+          "name": "actualValue",
+          "type": "number"
+        },
+        {
+          "name": "referenceValue",
+          "type": "number"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setZones": {
+      "description": "Set lower, target and upper zone percentages. Sum must be 100.",
+      "parameters": [
+        {
+          "name": "lowerBoundZonePercentage",
+          "type": "number"
+        },
+        {
+          "name": "targetZonePercentage",
+          "type": "number"
+        },
+        {
+          "name": "upperBoundZonePercentage",
+          "type": "number"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setColors": {
+      "description": "Set zone colors and optionally marker color.",
+      "parameters": [
+        {
+          "name": "lowerBoundZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "targetZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "upperBoundZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "markerColor",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    }
+  }
+}
