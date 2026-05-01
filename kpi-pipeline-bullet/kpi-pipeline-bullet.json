@@ -175,6 +175,17 @@
         { "name": "mode", "type": "string" }
       ],
       "returnType": "void"
+    },
+
+    "setConfig": {
+      "description": "Set multiple properties via JSON config.",
+      "parameters": [
+        {
+          "name": "config",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
     }
   },
 

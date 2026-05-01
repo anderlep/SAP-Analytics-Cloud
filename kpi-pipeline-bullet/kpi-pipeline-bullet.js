@@ -256,6 +256,22 @@
       this.render();
     }
 
+    setConfig(cfg) {
+      try {
+        const obj = typeof cfg === "string" ? JSON.parse(cfg) : cfg;
+
+        Object.keys(obj).forEach((key) => {
+          if (key in this._state) {
+            this._state[key] = obj[key];
+          }
+        });
+
+        this.render();
+      } catch (e) {
+        console.error("Invalid config JSON", e);
+      }
+    }
+
     _formatNumber(value, decimals) {
       if (!Number.isFinite(value)) return "–";
       return value.toLocaleString(undefined, {
