@@ -6,7 +6,7 @@
         display: block;
         width: 100%;
         height: 100%;
-        font-family: "72", Arial, Helvetica, sans-serif;
+        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
         box-sizing: border-box;
       }
 
@@ -26,12 +26,15 @@
       }
 
       text {
-        font-family: "72", Arial, Helvetica, sans-serif;
+        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
+        font-weight: var(--kpb-font-weight, normal);
+        font-style: var(--kpb-font-style, normal);
         fill: var(--kpb-text-color, #32363a);
       }
 
       .muted {
-        fill: #6a6d70;
+        fill: var(--kpb-text-color, #6a6d70);
+        opacity: 0.78;
       }
 
       .error {
@@ -118,6 +121,22 @@
 
         showTooltip: true,
 
+        barHeight: 18,
+        markerWidth: 3,
+        markerRadius: 4,
+        referenceLineWidth: 2,
+        varianceLineWidth: 1.2,
+
+        fontFamily: "\"72\", Arial, Helvetica, sans-serif",
+        fontSize: 12,
+        fontWeight: "normal",
+        fontStyle: "normal",
+        textColor: "#32363a",
+        axisFontSize: 11,
+        markerFontSize: 13,
+
+        responsiveScaling: false,
+
         rawDecimals: 0,
         percentDecimals: 1,
         unit: "",
@@ -149,6 +168,19 @@
         "variance-display-mode",
         "variance-separator",
         "show-tooltip",
+        "bar-height",
+        "marker-width",
+        "marker-radius",
+        "reference-line-width",
+        "variance-line-width",
+        "font-family",
+        "font-size",
+        "font-weight",
+        "font-style",
+        "text-color",
+        "axis-font-size",
+        "marker-font-size",
+        "responsive-scaling",
         "raw-decimals",
         "percent-decimals",
         "unit",
@@ -284,6 +316,45 @@
 
     get showTooltip() { return this._state.showTooltip; }
     set showTooltip(v) { this._set("showTooltip", v); }
+
+    get barHeight() { return this._state.barHeight; }
+    set barHeight(v) { this._set("barHeight", v); }
+
+    get markerWidth() { return this._state.markerWidth; }
+    set markerWidth(v) { this._set("markerWidth", v); }
+
+    get markerRadius() { return this._state.markerRadius; }
+    set markerRadius(v) { this._set("markerRadius", v); }
+
+    get referenceLineWidth() { return this._state.referenceLineWidth; }
+    set referenceLineWidth(v) { this._set("referenceLineWidth", v); }
+
+    get varianceLineWidth() { return this._state.varianceLineWidth; }
+    set varianceLineWidth(v) { this._set("varianceLineWidth", v); }
+
+    get fontFamily() { return this._state.fontFamily; }
+    set fontFamily(v) { this._set("fontFamily", v); }
+
+    get fontSize() { return this._state.fontSize; }
+    set fontSize(v) { this._set("fontSize", v); }
+
+    get fontWeight() { return this._state.fontWeight; }
+    set fontWeight(v) { this._set("fontWeight", v); }
+
+    get fontStyle() { return this._state.fontStyle; }
+    set fontStyle(v) { this._set("fontStyle", v); }
+
+    get textColor() { return this._state.textColor; }
+    set textColor(v) { this._set("textColor", v); }
+
+    get axisFontSize() { return this._state.axisFontSize; }
+    set axisFontSize(v) { this._set("axisFontSize", v); }
+
+    get markerFontSize() { return this._state.markerFontSize; }
+    set markerFontSize(v) { this._set("markerFontSize", v); }
+
+    get responsiveScaling() { return this._state.responsiveScaling; }
+    set responsiveScaling(v) { this._set("responsiveScaling", v); }
 
     get rawDecimals() { return this._state.rawDecimals; }
     set rawDecimals(v) { this._set("rawDecimals", v); }
@@ -434,6 +505,11 @@
       const tooltip = this._tooltip;
       const arrow = this._tooltipArrow;
 
+      tooltip.style.fontFamily = this._state.fontFamily;
+      tooltip.style.fontSize = `${Math.max(8, Number(this._state.fontSize))}px`;
+      tooltip.style.fontWeight = this._state.fontWeight;
+      tooltip.style.fontStyle = this._state.fontStyle;
+
       tooltip.innerHTML = html;
       tooltip.appendChild(arrow);
 
@@ -540,6 +616,12 @@
       if (!this.isConnected || !this._root) return;
 
       const s = this._state;
+
+      this._root.style.setProperty("--kpb-font-family", s.fontFamily);
+      this._root.style.setProperty("--kpb-font-weight", s.fontWeight);
+      this._root.style.setProperty("--kpb-font-style", s.fontStyle);
+      this._root.style.setProperty("--kpb-text-color", s.textColor);
+
       const actual = Number(s.actualValue);
       const ref = Number(s.referenceValue);
       const lowerPct = Number(s.lowerBoundZonePercentage);
@@ -584,15 +666,26 @@
       const plotX = margin.left;
       const plotW = Math.max(width - margin.left - margin.right, 80);
 
-      const barY = Math.max(42, height * 0.38);
-      const barH = Math.min(24, Math.max(14, height * 0.16));
-      const varianceY = barY - 24;
+      const scaleFactor = s.responsiveScaling
+        ? Math.max(0.75, Math.min(1.6, height / 120))
+        : 1;
+
+      const barH = Math.max(2, Number(s.barHeight) * scaleFactor);
+      const markerWidth = Math.max(1, Number(s.markerWidth) * scaleFactor);
+      const markerRadius = Math.max(1, Number(s.markerRadius) * scaleFactor);
+      const referenceLineWidth = Math.max(1, Number(s.referenceLineWidth) * scaleFactor);
+      const varianceLineWidth = Math.max(0.5, Number(s.varianceLineWidth) * scaleFactor);
+      const labelFont = Math.max(6, Number(s.axisFontSize || s.fontSize) * scaleFactor);
+      const valueFont = Math.max(6, Number(s.markerFontSize || s.fontSize) * scaleFactor);
+
+      const barY = Math.max(margin.top + 8, height * 0.38);
+      const varianceY = barY - Math.max(18, barH * 1.35);
       const axisLabelY = height - 8;
-      const markerTop = barY - 10;
-      const markerBottom = barY + barH + 10;
+      const markerTop = barY - Math.max(6, barH * 0.45);
+      const markerBottom = barY + barH + Math.max(6, barH * 0.45);
       const markerLabelY = s.showAxisLabels
-        ? Math.min(axisLabelY - 18, markerBottom + 18)
-        : Math.min(height - 8, markerBottom + 18);
+        ? Math.min(axisLabelY - Math.max(14, valueFont + 5), markerBottom + valueFont + 5)
+        : Math.min(height - 8, markerBottom + valueFont + 5);
 
       const scale = (value) => plotX + ((value - axisMin) / axisRange) * plotW;
       const clamp = (x) => Math.max(plotX, Math.min(plotX + plotW, x));
@@ -619,9 +712,6 @@
       const showReferenceLine = s.showReferenceLine || s.referenceLineOnHover;
       const referenceLineClass = s.showReferenceLine ? "reference-line-layer always-visible" : "reference-line-layer";
 
-      const labelFont = Math.max(10, Math.min(13, height * 0.1));
-      const valueFont = Math.max(11, Math.min(15, height * 0.12));
-
       const outsideLeft = actual < axisMin;
       const outsideRight = actual > axisMax;
       const outsideHint = outsideLeft ? "◀" : outsideRight ? "▶" : "";
@@ -641,28 +731,28 @@
           ${showReferenceLine ? `
             <g class="${referenceLineClass}">
               <line x1="${xRef}" y1="${barY - 7}" x2="${xRef}" y2="${barY + barH + 7}"
-                    stroke="${s.referenceLineColor}" stroke-width="2"></line>
+                    stroke="${s.referenceLineColor}" stroke-width="${referenceLineWidth}"></line>
             </g>
           ` : ""}
 
           ${showArrow ? `
             <g class="${varianceLayerClass}">
               <line x1="${xActual}" y1="${barY - 7}" x2="${xActual}" y2="${varianceY + 5}"
-                    stroke="${s.varianceColor}" stroke-width="1" stroke-dasharray="${dashArray}"></line>
+                    stroke="${s.varianceColor}" stroke-width="${varianceLineWidth}" stroke-dasharray="${dashArray}"></line>
 
               <line x1="${xRef}" y1="${barY - 7}" x2="${xRef}" y2="${varianceY + 5}"
-                    stroke="${s.varianceColor}" stroke-width="1" stroke-dasharray="${dashArray}"></line>
+                    stroke="${s.varianceColor}" stroke-width="${varianceLineWidth}" stroke-dasharray="${dashArray}"></line>
 
               <line x1="${arrowStartX}" y1="${varianceY}"
                     x2="${arrowEndX}" y2="${varianceY}"
-                    stroke="${s.varianceColor}" stroke-width="1.2"
+                    stroke="${s.varianceColor}" stroke-width="${varianceLineWidth}"
                     stroke-dasharray="${dashArray}"
                     marker-end="url(#pb-arrow-head)"></line>
             </g>
           ` : ""}
 
-          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="3"></line>
-          <circle cx="${xActual}" cy="${markerTop}" r="6" fill="${s.markerColor}" class="marker-hit"></circle>
+          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="${markerWidth}"></line>
+          <circle cx="${xActual}" cy="${markerTop}" r="${Math.max(markerRadius + 2, 6)}" fill="${s.markerColor}" class="marker-hit"></circle>
 
           ${outsideHint ? `
             <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
