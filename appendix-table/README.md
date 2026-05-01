@@ -2,7 +2,7 @@
 
 ## 📌 Overview
 
-**Appendix Table** is a custom widget for SAP Analytics Cloud (SAC) that displays filters, variables, or any structured metadata in a flexible table format.
+Appendix Table is a custom widget for SAP Analytics Cloud (SAC) that displays filters, variables, or any structured metadata in a flexible table format.
 
 Originally designed for showing SAC filters/variables, the widget is now fully dynamic and reusable for any tabular metadata.
 
@@ -10,23 +10,24 @@ Originally designed for showing SAC filters/variables, the widget is now fully d
 
 ## 🚀 Features
 
-* ✅ Dynamic columns (not limited to 3)
+* ✅ Dynamic columns (not limited)
 * ✅ Configurable column headers
 * ✅ Optional operator column (`showOperator`)
+* ✅ Full styling support (similar to SAC tables)
+* ✅ Custom CSS injection
+* ✅ Sticky header support
 * ✅ Fully data-driven rendering
-* ✅ Safe HTML rendering (escaping)
-* ✅ Works with SAC Analytics Designer scripting
-* ✅ Lightweight (pure Web Component, no dependencies)
+* ✅ Lightweight (pure Web Component)
 
 ---
 
 ## 📦 Installation
 
-### 1. Host the widget JS
+### 1. Host JavaScript
 
-Upload `appendix-table.js` to a public HTTPS location (e.g. GitHub Pages):
+Upload `appendix-table.js` to a public HTTPS location:
 
-```
+```text
 https://<your-domain>/appendix-table.js
 ```
 
@@ -37,24 +38,25 @@ https://<your-domain>/appendix-table.js
 1. Go to **Custom Widgets**
 2. Click **Upload**
 3. Upload `appendix-table.json`
+4. Add widget to your Story / Analytics Application
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Properties
 
-### Properties
-
-| Property  | Type   | Description                              |
-| --------- | ------ | ---------------------------------------- |
-| `rows`    | string | JSON array with row data                 |
-| `config`  | string | JSON object with default column settings |
-| `columns` | string | JSON array defining dynamic columns      |
+| Property      | Type   | Description                       |
+| ------------- | ------ | --------------------------------- |
+| `rows`        | string | JSON array with table rows        |
+| `config`      | string | JSON config for default structure |
+| `columns`     | string | JSON array for dynamic columns    |
+| `styleConfig` | string | JSON styling configuration        |
+| `customCss`   | string | Custom CSS                        |
 
 ---
 
-## 🧩 Data Structure
+## 🧩 Data Structures
 
-### 🔹 Rows
+### Rows
 
 ```json
 [
@@ -64,47 +66,53 @@ https://<your-domain>/appendix-table.js
 
 ---
 
-### 🔹 Config
+### Config
 
 ```json
 {
   "label": "Filter",
   "op": "Operator",
   "value": "Value",
-  "showOperator": true
+  "showOperator": true,
+  "emptyText": "No data available"
 }
 ```
 
-| Field          | Description                     |
-| -------------- | ------------------------------- |
-| `label`        | Header for filter/variable name |
-| `op`           | Header for operator             |
-| `value`        | Header for value                |
-| `showOperator` | Show/hide operator column       |
-
 ---
 
-### 🔹 Columns (Advanced – Dynamic Mode)
+### Dynamic Columns
 
 ```json
 [
   { "key": "type", "title": "Type" },
   { "key": "name", "title": "Name" },
-  { "key": "operator", "title": "Operator" },
   { "key": "selection", "title": "Selection" }
 ]
 ```
 
-| Field                    | Description                 |
-| ------------------------ | --------------------------- |
-| `key`                    | Property name in row object |
-| `title`                  | Column header               |
-| `width` *(optional)*     | CSS width                   |
-| `className` *(optional)* | CSS class                   |
+---
+
+### Style Config
+
+```json
+{
+  "fontSize": "13px",
+  "fontFamily": "Arial",
+  "headerBackground": "#354a5f",
+  "headerColor": "#ffffff",
+  "rowBackground": "#ffffff",
+  "alternateRowBackground": "#f7f7f7",
+  "borderColor": "#d9d9d9",
+  "textColor": "#333333",
+  "rowHeight": "compact",
+  "showGrid": true,
+  "stickyHeader": true
+}
+```
 
 ---
 
-## 🧪 Usage in SAC (Script)
+## 🧪 Usage in SAC
 
 ### Basic Example
 
@@ -136,7 +144,7 @@ AppendixTable_1.setConfig(
 
 ---
 
-### Fully Dynamic Columns
+### Dynamic Columns
 
 ```javascript
 AppendixTable_1.setColumns(
@@ -150,61 +158,68 @@ AppendixTable_1.setRows(
 
 ---
 
-## 🔗 SAC Integration (Important)
-
-Custom widgets **cannot directly read SAC filters or variables**.
-
-👉 You must extract them via SAC scripting and pass them to the widget.
-
-Example pattern:
+### Styling
 
 ```javascript
-var data =
-  '[' +
-  '{"label":"Region","op":"IN","value":"EMEA, APJ"}' +
-  ']';
-
-AppendixTable_1.setRows(data);
+AppendixTable_1.setStyleConfig(
+  '{"headerBackground":"#354a5f","headerColor":"#fff","rowHeight":"compact"}'
+);
 ```
 
 ---
 
-## 🛠️ Methods
+### Custom CSS
 
-| Method               | Description         |
-| -------------------- | ------------------- |
-| `setRows(string)`    | Set table data      |
-| `setConfig(string)`  | Set config          |
-| `setColumns(string)` | Set dynamic columns |
-| `clear()`            | Clear table         |
+```javascript
+AppendixTable_1.setCustomCss(
+  'td{font-size:14px;} tr:hover{background:#eef5ff;}'
+);
+```
+
+---
+
+## 🔗 SAC Integration
+
+Custom widgets **cannot directly read SAC filters or variables**.
+
+👉 You must pass data via SAC scripting.
+
+```javascript
+var rows =
+  '[' +
+  '{"label":"Region","op":"IN","value":"EMEA, APJ"}' +
+  ']';
+
+AppendixTable_1.setRows(rows);
+```
 
 ---
 
 ## ⚠️ Limitations
 
-* Runs in browser → no full security for JS
-* SAC scripting engine does not support `JSON.stringify`
-* Data must be passed as **stringified JSON**
+* No direct SAC API access inside widget
+* Requires JSON string input
+* `JSON.stringify` not supported in SAC scripting
+* Browser-based → JS cannot be fully protected
 
 ---
 
 ## 🔐 Security Notes
 
-* Widget JS must be publicly accessible
-* For commercial use:
+For commercial use:
 
-  * use custom hosting
-  * add license validation endpoint
-  * optionally restrict by SAC tenant
+* Use controlled hosting (not GitHub Pages)
+* Add license validation
+* Restrict by SAC tenant
 
 ---
 
-## 📈 Roadmap Ideas
+## 📈 Roadmap
 
 * Auto-binding to SAC Input Controls
-* Export to CSV / PDF
-* Sorting & filtering
-* Theming support
+* Export (CSV / PDF)
+* Sorting / filtering
+* Themes
 
 ---
 
@@ -216,4 +231,4 @@ Petr Anderle
 
 ## 📄 License
 
-Internal / custom (define as needed)
+Custom / internal (define as needed)

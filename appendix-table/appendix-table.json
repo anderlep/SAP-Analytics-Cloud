@@ -3,10 +3,10 @@
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
   "id": "com.company.sac.appendix.table",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Appendix Table",
   "newInstancePrefix": "AppendixTable",
-  "description": "Displays SAC variables, filters or arbitrary metadata as a configurable appendix table.",
+  "description": "Displays SAC variables, filters or arbitrary metadata as a configurable and styleable appendix table.",
   "webcomponents": [
     {
       "kind": "main",
@@ -19,15 +19,23 @@
   "properties": {
     "rows": {
       "type": "string",
-      "description": "JSON array with table rows."
+      "description": "JSON array with table rows. Each row is an object."
     },
     "config": {
       "type": "string",
-      "description": "JSON config object."
+      "description": "JSON config object, e.g. {\"label\":\"Filter\",\"op\":\"Operator\",\"value\":\"Value\",\"showOperator\":true}."
     },
     "columns": {
       "type": "string",
       "description": "JSON array with dynamic column definitions."
+    },
+    "styleConfig": {
+      "type": "string",
+      "description": "JSON style configuration for table appearance."
+    },
+    "customCss": {
+      "type": "string",
+      "description": "Custom CSS injected into the widget shadow DOM."
     }
   },
   "methods": {
@@ -37,7 +45,7 @@
         {
           "name": "rows",
           "type": "string",
-          "description": "JSON array of rows."
+          "description": "JSON array of row objects."
         }
       ],
       "returnType": "void"
@@ -64,8 +72,41 @@
       ],
       "returnType": "void"
     },
+    "setStyleConfig": {
+      "description": "Sets table style configuration as JSON string.",
+      "parameters": [
+        {
+          "name": "styleConfig",
+          "type": "string",
+          "description": "JSON style configuration."
+        }
+      ],
+      "returnType": "void"
+    },
+    "setCustomCss": {
+      "description": "Sets custom CSS string.",
+      "parameters": [
+        {
+          "name": "customCss",
+          "type": "string",
+          "description": "CSS string."
+        }
+      ],
+      "returnType": "void"
+    },
+    "setData": {
+      "description": "Sets config, columns, styleConfig, customCss and rows at once.",
+      "parameters": [
+        {
+          "name": "data",
+          "type": "string",
+          "description": "JSON object with config, columns, styleConfig, customCss and rows."
+        }
+      ],
+      "returnType": "void"
+    },
     "clear": {
-      "description": "Clears appendix table.",
+      "description": "Clears appendix table rows.",
       "parameters": [],
       "returnType": "void"
     }

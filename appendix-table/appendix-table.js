@@ -6,17 +6,20 @@
 
       this._rows = "[]";
       this._columns = "";
-      this._config = '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
+      this._config =
+        '{"label":"Filter","op":"Operator","value":"Value","showOperator":true,"emptyText":"Nejsou dostupná žádná data."}';
+      this._styleConfig = "{}";
+      this._customCss = "";
     }
 
     connectedCallback() {
       this.render();
     }
 
+    // ====== PROPERTIES ======
     get rows() {
       return this._rows;
     }
-
     set rows(value) {
       this._rows = value || "[]";
       this.render();
@@ -25,28 +28,43 @@
     get config() {
       return this._config;
     }
-
     set config(value) {
-      this._config = value || '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
+      this._config = value || this._config;
       this.render();
     }
 
     get columns() {
       return this._columns;
     }
-
     set columns(value) {
       this._columns = value || "";
       this.render();
     }
 
+    get styleConfig() {
+      return this._styleConfig;
+    }
+    set styleConfig(value) {
+      this._styleConfig = value || "{}";
+      this.render();
+    }
+
+    get customCss() {
+      return this._customCss;
+    }
+    set customCss(value) {
+      this._customCss = value || "";
+      this.render();
+    }
+
+    // ====== METHODS ======
     setRows(rows) {
       this._rows = rows || "[]";
       this.render();
     }
 
     setConfig(config) {
-      this._config = config || '{"label":"Filter","op":"Operator","value":"Value","showOperator":true}';
+      this._config = config || this._config;
       this.render();
     }
 
@@ -55,28 +73,43 @@
       this.render();
     }
 
+    setStyleConfig(styleConfig) {
+      this._styleConfig = styleConfig || "{}";
+      this.render();
+    }
+
+    setCustomCss(customCss) {
+      this._customCss = customCss || "";
+      this.render();
+    }
+
+    setData(data) {
+      try {
+        var parsed = JSON.parse(data || "{}");
+
+        if (parsed.config) this._config = JSON.stringify(parsed.config);
+        if (parsed.columns) this._columns = JSON.stringify(parsed.columns);
+        if (parsed.styleConfig)
+          this._styleConfig = JSON.stringify(parsed.styleConfig);
+        if (parsed.customCss) this._customCss = parsed.customCss;
+        if (parsed.rows) this._rows = JSON.stringify(parsed.rows);
+      } catch (e) {
+        this._rows = "[]";
+      }
+
+      this.render();
+    }
+
     clear() {
       this._rows = "[]";
       this.render();
     }
 
-    _escapeHtml(value) {
-      if (value === null || value === undefined) {
-        return "";
-      }
-
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
+    // ====== PARSERS ======
     _parseRows() {
       try {
-        var parsed = JSON.parse(this._rows || "[]");
-        return Array.isArray(parsed) ? parsed : [];
+        var r = JSON.parse(this._rows || "[]");
+        return Array.isArray(r) ? r : [];
       } catch (e) {
         return [];
       }
@@ -84,14 +117,13 @@
 
     _parseConfig() {
       try {
-        var parsed = JSON.parse(this._config || "{}");
-
+        var c = JSON.parse(this._config || "{}");
         return {
-          label: parsed.label || "Filter",
-          op: parsed.op || "Operator",
-          value: parsed.value || "Value",
-          showOperator: parsed.showOperator !== false,
-          emptyText: parsed.emptyText || "Nejsou dostupná žádná data."
+          label: c.label || "Filter",
+          op: c.op || "Operator",
+          value: c.value || "Value",
+          showOperator: c.showOperator !== false,
+          emptyText: c.emptyText || "Nejsou dostupná žádná data."
         };
       } catch (e) {
         return {
@@ -106,118 +138,130 @@
 
     _parseColumns(config) {
       try {
-        var parsed = JSON.parse(this._columns || "[]");
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed
-            .filter(function (column) {
-              return column && column.key;
-            })
-            .map(function (column) {
-              return {
-                key: column.key,
-                title: column.title || column.key,
-                width: column.width || "",
-                className: column.className || ""
-              };
-            });
+        var cols = JSON.parse(this._columns || "[]");
+        if (Array.isArray(cols) && cols.length) {
+          return cols.map(function (c) {
+            return {
+              key: c.key,
+              title: c.title || c.key,
+              width: c.width || "",
+              className: c.className || ""
+            };
+          });
         }
       } catch (e) {}
 
       if (config.showOperator) {
         return [
-          { key: "label", title: config.label, width: "35%", className: "label" },
-          { key: "op", title: config.op, width: "15%", className: "operator" },
-          { key: "value", title: config.value, width: "50%", className: "value" }
+          { key: "label", title: config.label },
+          { key: "op", title: config.op },
+          { key: "value", title: config.value }
         ];
       }
 
       return [
-        { key: "label", title: config.label, width: "40%", className: "label" },
-        { key: "value", title: config.value, width: "60%", className: "value" }
+        { key: "label", title: config.label },
+        { key: "value", title: config.value }
       ];
     }
 
-    _buildHeaderHtml(columns) {
-      var html = "";
-
-      for (var i = 0; i < columns.length; i++) {
-        var width = columns[i].width
-          ? ' style="width:' + this._escapeHtml(columns[i].width) + ';"'
-          : "";
-
-        html += "<th" + width + ">" + this._escapeHtml(columns[i].title) + "</th>";
+    _parseStyle() {
+      try {
+        var s = JSON.parse(this._styleConfig || "{}");
+        return {
+          fontSize: s.fontSize || "12px",
+          fontFamily: s.fontFamily || "Arial, Helvetica, sans-serif",
+          headerBg: s.headerBackground || "#f3f3f3",
+          headerColor: s.headerColor || "#333",
+          rowBg: s.rowBackground || "#fff",
+          altRowBg: s.alternateRowBackground || "",
+          borderColor: s.borderColor || "#e5e5e5",
+          textColor: s.textColor || "#333",
+          rowHeight: s.rowHeight || "default",
+          showGrid: s.showGrid !== false,
+          stickyHeader: s.stickyHeader !== false
+        };
+      } catch (e) {
+        return {};
       }
-
-      return html;
     }
 
-    _buildBodyHtml(rows, columns, config) {
-      var html = "";
-
-      if (rows.length === 0) {
-        return (
-          '<tr><td colspan="' +
-          columns.length +
-          '" class="empty">' +
-          this._escapeHtml(config.emptyText) +
-          "</td></tr>"
-        );
-      }
-
-      for (var r = 0; r < rows.length; r++) {
-        html += "<tr>";
-
-        for (var c = 0; c < columns.length; c++) {
-          var key = columns[c].key;
-          var className = columns[c].className
-            ? ' class="' + this._escapeHtml(columns[c].className) + '"'
-            : "";
-
-          html +=
-            "<td" +
-            className +
-            ">" +
-            this._escapeHtml(rows[r] ? rows[r][key] : "") +
-            "</td>";
-        }
-
-        html += "</tr>";
-      }
-
-      return html;
-    }
-
+    // ====== RENDER ======
     render() {
       var rows = this._parseRows();
       var config = this._parseConfig();
       var columns = this._parseColumns(config);
+      var style = this._parseStyle();
 
-      var headerHtml = this._buildHeaderHtml(columns);
-      var bodyHtml = this._buildBodyHtml(rows, columns, config);
+      var padding =
+        style.rowHeight === "compact"
+          ? "4px 6px"
+          : style.rowHeight === "comfortable"
+          ? "10px 12px"
+          : "6px 8px";
+
+      var border = style.showGrid
+        ? "1px solid " + style.borderColor
+        : "none";
+
+      var sticky = style.stickyHeader ? "position:sticky;top:0;" : "";
+
+      var header = "";
+      columns.forEach(function (c) {
+        header += "<th>" + c.title + "</th>";
+      });
+
+      var body = "";
+
+      if (!rows.length) {
+        body =
+          '<tr><td colspan="' +
+          columns.length +
+          '" class="empty">' +
+          config.emptyText +
+          "</td></tr>";
+      } else {
+        rows.forEach(function (r) {
+          body += "<tr>";
+          columns.forEach(function (c) {
+            body += "<td>" + (r[c.key] || "") + "</td>";
+          });
+          body += "</tr>";
+        });
+      }
 
       this.shadowRoot.innerHTML =
         "<style>" +
-        ":host{display:block;width:100%;height:100%;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;}" +
-        ".wrapper{width:100%;height:100%;overflow:auto;box-sizing:border-box;border:1px solid #d9d9d9;background:#fff;}" +
-        "table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}" +
-        "thead th{position:sticky;top:0;background:#f3f3f3;z-index:1;font-weight:600;border-bottom:1px solid #cfcfcf;}" +
-        "th,td{border-right:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:6px 8px;text-align:left;vertical-align:top;box-sizing:border-box;}" +
-        "th:last-child,td:last-child{border-right:none;}" +
-        ".operator{white-space:nowrap;font-weight:600;}" +
-        ".value{word-break:break-word;white-space:pre-wrap;}" +
-        ".empty{text-align:center;color:#777;padding:16px;}" +
+        ":host{display:block;font-family:" +
+        style.fontFamily +
+        ";color:" +
+        style.textColor +
+        ";}" +
+        "table{width:100%;border-collapse:collapse;font-size:" +
+        style.fontSize +
+        ";}" +
+        "th{background:" +
+        style.headerBg +
+        ";color:" +
+        style.headerColor +
+        ";" +
+        sticky +
+        "}" +
+        "th,td{border:" +
+        border +
+        ";padding:" +
+        padding +
+        ";}" +
+        (style.altRowBg
+          ? "tr:nth-child(even){background:" + style.altRowBg + ";}"
+          : "") +
+        this._customCss +
         "</style>" +
-        "<div class='wrapper'>" +
-        "<table>" +
-        "<thead><tr>" +
-        headerHtml +
-        "</tr></thead>" +
-        "<tbody>" +
-        bodyHtml +
-        "</tbody>" +
-        "</table>" +
-        "</div>";
+        "<table><thead><tr>" +
+        header +
+        "</tr></thead><tbody>" +
+        body +
+        "</tbody></table>";
     }
   }
 
