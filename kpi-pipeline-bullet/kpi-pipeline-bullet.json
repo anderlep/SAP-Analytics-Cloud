@@ -1,6 +1,6 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "name": "KPI Pipeline Bullet",
   "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, hover variance, hover reference line and smart tooltip.",
   "newInstancePrefix": "KpiPipelineBullet",
@@ -203,6 +203,18 @@
     "clampMarker": {
       "type": "boolean",
       "default": true
+    },
+    "semanticIconInTooltip": {
+      "type": "boolean",
+      "default": true
+    },
+    "semanticIconInMarkerLabel": {
+      "type": "boolean",
+      "default": false
+    },
+    "showSemanticStatusInTooltip": {
+      "type": "boolean",
+      "default": false
     }
   },
   "methods": {

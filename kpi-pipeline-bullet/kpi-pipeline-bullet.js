@@ -145,6 +145,9 @@
         semanticRules: [],
         semanticIconVisible: true,
         semanticIconPosition: "before",
+        semanticIconInTooltip: true,
+        semanticIconInMarkerLabel: false,
+        showSemanticStatusInTooltip: false,
 
         rawDecimals: 0,
         percentDecimals: 1,
@@ -197,6 +200,9 @@
         "semantic-rules",
         "semantic-icon-visible",
         "semantic-icon-position",
+        "semantic-icon-in-tooltip",
+        "semantic-icon-in-marker-label",
+        "show-semantic-status-in-tooltip",
         "raw-decimals",
         "percent-decimals",
         "unit",
@@ -408,6 +414,15 @@
     get semanticIconPosition() { return this._state.semanticIconPosition; }
     set semanticIconPosition(v) { this._set("semanticIconPosition", v); }
 
+    get semanticIconInTooltip() { return this._state.semanticIconInTooltip; }
+    set semanticIconInTooltip(v) { this._set("semanticIconInTooltip", v); }
+
+    get semanticIconInMarkerLabel() { return this._state.semanticIconInMarkerLabel; }
+    set semanticIconInMarkerLabel(v) { this._set("semanticIconInMarkerLabel", v); }
+
+    get showSemanticStatusInTooltip() { return this._state.showSemanticStatusInTooltip; }
+    set showSemanticStatusInTooltip(v) { this._set("showSemanticStatusInTooltip", v); }
+
     get rawDecimals() { return this._state.rawDecimals; }
     set rawDecimals(v) { this._set("rawDecimals", v); }
 
@@ -547,6 +562,27 @@
 
     _formatMarkerLabel(value, rule) {
       const valueText = this._escapeHtml(this._formatNumber(value, this._state.rawDecimals));
+
+      if (!this._state.semanticIconInMarkerLabel) {
+        return valueText;
+      }
+
+      const icon = this._getSemanticText(rule);
+
+      if (!icon) return valueText;
+
+      return this._state.semanticIconPosition === "after"
+        ? `${valueText} ${icon}`
+        : `${icon} ${valueText}`;
+    }
+
+    _formatTooltipActual(value, rule) {
+      const valueText = this._escapeHtml(this._formatNumber(value, this._state.rawDecimals));
+
+      if (!this._state.semanticIconInTooltip) {
+        return valueText;
+      }
+
       const icon = this._getSemanticText(rule);
 
       if (!icon) return valueText;
@@ -731,7 +767,7 @@
         ? this._escapeHtml(semanticRule.label)
         : "";
 
-      const semanticRow = (semanticIcon || semanticLabel) ? `
+      const semanticRow = (this._state.showSemanticStatusInTooltip && (semanticIcon || semanticLabel)) ? `
           <div style="color:#d9d9d9;">Status</div>
           <div style="font-weight:700;text-align:right;color:${this._escapeHtml(semanticRule.tooltipTextColor || semanticRule.textColor || "#ffffff")};">
             ${semanticIcon}${semanticIcon && semanticLabel ? " " : ""}${semanticLabel}
@@ -742,7 +778,7 @@
         <div style="display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:4px;align-items:center;">
           <div style="color:#d9d9d9;">Actual</div>
           <div style="font-weight:700;text-align:right;color:${this._escapeHtml(semanticRule && semanticRule.textColor ? semanticRule.textColor : "#ffffff")};">
-            ${this._formatMarkerLabel(actual, semanticRule)}
+            ${this._formatTooltipActual(actual, semanticRule)}
           </div>
           <div style="color:#d9d9d9;">Reference</div>
           <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatNumber(ref, this._state.rawDecimals))}</div>
@@ -862,8 +898,8 @@
         variancePct
       };
       const semanticRule = this._getSemanticRule(semanticContext);
-      const effectiveMarkerColor = semanticRule && semanticRule.markerColor ? semanticRule.markerColor : s.markerColor;
-      const effectiveTextColor = semanticRule && semanticRule.textColor ? semanticRule.textColor : effectiveMarkerColor;
+      const effectiveMarkerColor = s.markerColor;
+      const effectiveTextColor = semanticRule && semanticRule.textColor ? semanticRule.textColor : s.markerColor;
       const effectiveFontWeight = semanticRule && semanticRule.fontWeight ? semanticRule.fontWeight : s.fontWeight;
       const effectiveFontStyle = semanticRule && semanticRule.fontStyle ? semanticRule.fontStyle : s.fontStyle;
       const semanticBackgroundColor = semanticRule && semanticRule.backgroundColor ? semanticRule.backgroundColor : "transparent";
