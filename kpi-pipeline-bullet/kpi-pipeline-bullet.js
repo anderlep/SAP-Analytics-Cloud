@@ -11,7 +11,6 @@
       }
 
       .root {
-        position: relative;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
@@ -41,81 +40,37 @@
         padding: 8px;
       }
 
-      .variance-layer,
+      .variance-layer {
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+        pointer-events: none;
+      }
+
+      :host(:hover) .variance-layer {
+        opacity: 1;
+      }
+
+      .variance-layer.always-visible {
+        opacity: 1;
+      }
+
       .reference-line-layer {
         opacity: 0;
         transition: opacity 0.15s ease-in-out;
         pointer-events: none;
       }
 
-      :host(:hover) .variance-layer,
       :host(:hover) .reference-line-layer {
         opacity: 1;
       }
 
-      .variance-layer.always-visible,
       .reference-line-layer.always-visible {
         opacity: 1;
       }
 
-      .marker-layer {
+      .marker-hit {
         cursor: default;
-      }
-
-      .marker-hit-area {
-        fill: transparent;
         pointer-events: all;
-      }
-
-      .tooltip {
-        position: absolute;
-        z-index: 10;
-        min-width: 150px;
-        max-width: 260px;
-        padding: 8px 10px;
-        border-radius: 4px;
-        background: rgba(50, 54, 58, 0.96);
-        color: #ffffff;
-        font-size: 12px;
-        line-height: 1.35;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
-        transform: translate(-50%, -100%);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.12s ease-in-out;
-        white-space: nowrap;
-      }
-
-      .tooltip.visible {
-        opacity: 1;
-      }
-
-      .tooltip::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        bottom: -6px;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-top: 6px solid rgba(50, 54, 58, 0.96);
-      }
-
-      .tooltip-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-      }
-
-      .tooltip-label {
-        color: #d9d9d9;
-      }
-
-      .tooltip-value {
-        color: #ffffff;
-        font-weight: 600;
       }
     </style>
     <div class="root"></div>
@@ -127,8 +82,11 @@
 
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
+
       this._root = this.shadowRoot.querySelector(".root");
       this._resizeObserver = null;
+      this._tooltip = null;
+      this._tooltipArrow = null;
 
       this._state = {
         actualValue: 450,
@@ -169,23 +127,41 @@
 
     static get observedAttributes() {
       return [
-        "actual-value", "reference-value",
-        "lower-bound-zone-percentage", "target-zone-percentage", "upper-bound-zone-percentage",
-        "lower-bound-zone-color", "target-zone-color", "upper-bound-zone-color",
-        "marker-color", "reference-line-color", "variance-color",
-        "show-labels", "show-marker-label", "show-axis-labels",
-        "show-reference-line", "reference-line-on-hover",
-        "show-variance-indicator", "variance-on-hover", "variance-line-style",
-        "variance-display-mode", "variance-separator",
+        "actual-value",
+        "reference-value",
+        "lower-bound-zone-percentage",
+        "target-zone-percentage",
+        "upper-bound-zone-percentage",
+        "lower-bound-zone-color",
+        "target-zone-color",
+        "upper-bound-zone-color",
+        "marker-color",
+        "reference-line-color",
+        "variance-color",
+        "show-labels",
+        "show-marker-label",
+        "show-axis-labels",
+        "show-reference-line",
+        "reference-line-on-hover",
+        "show-variance-indicator",
+        "variance-on-hover",
+        "variance-line-style",
+        "variance-display-mode",
+        "variance-separator",
         "show-tooltip",
-        "raw-decimals", "percent-decimals", "unit", "clamp-marker"
+        "raw-decimals",
+        "percent-decimals",
+        "unit",
+        "clamp-marker"
       ];
     }
 
     connectedCallback() {
       this._upgradeProperties(Object.keys(this._state));
+
       this._resizeObserver = new ResizeObserver(() => this.render());
       this._resizeObserver.observe(this);
+
       this.render();
     }
 
@@ -193,6 +169,8 @@
       if (this._resizeObserver) {
         this._resizeObserver.disconnect();
       }
+
+      this._removeTooltip();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -220,7 +198,9 @@
     }
 
     _parseValue(prop, value) {
-      if (value === null || value === undefined) return this._state[prop];
+      if (value === null || value === undefined) {
+        return this._state[prop];
+      }
 
       if (typeof this._state[prop] === "boolean") {
         return value === true || value === "true";
@@ -334,9 +314,11 @@
       this._state.lowerBoundZoneColor = String(lowerBoundZoneColor);
       this._state.targetZoneColor = String(targetZoneColor);
       this._state.upperBoundZoneColor = String(upperBoundZoneColor);
+
       if (markerColor !== undefined) {
         this._state.markerColor = String(markerColor);
       }
+
       this.render();
     }
 
@@ -346,20 +328,22 @@
       this.render();
     }
 
-    setConfig(cfg) {
+    setConfig(config) {
       try {
-        const obj = typeof cfg === "string" ? JSON.parse(cfg) : cfg;
+        const cfg = typeof config === "string" ? JSON.parse(config) : config;
 
-        Object.keys(obj).forEach((key) => {
+        Object.keys(cfg).forEach((key) => {
           if (Object.prototype.hasOwnProperty.call(this._state, key)) {
-            this._state[key] = this._parseValue(key, obj[key]);
+            this._state[key] = this._parseValue(key, cfg[key]);
           }
         });
 
         this.render();
       } catch (e) {
         console.error("Invalid config JSON", e);
-        this._root.innerHTML = `<div class="error">Invalid config JSON.</div>`;
+        if (this._root) {
+          this._root.innerHTML = '<div class="error">Invalid config JSON.</div>';
+        }
       }
     }
 
@@ -402,19 +386,154 @@
         .replace(/'/g, "&#039;");
     }
 
-    _bindTooltip() {
-      const tooltip = this.shadowRoot.querySelector(".tooltip");
-      const marker = this.shadowRoot.querySelector(".marker-layer");
+    _createTooltip() {
+      if (this._tooltip) return;
 
-      if (!tooltip || !marker) return;
+      const tooltip = document.createElement("div");
+      tooltip.style.position = "fixed";
+      tooltip.style.left = "0";
+      tooltip.style.top = "0";
+      tooltip.style.background = "#3a3f44";
+      tooltip.style.color = "#ffffff";
+      tooltip.style.padding = "8px 10px";
+      tooltip.style.borderRadius = "6px";
+      tooltip.style.fontFamily = '"72", Arial, Helvetica, sans-serif';
+      tooltip.style.fontSize = "12px";
+      tooltip.style.lineHeight = "1.35";
+      tooltip.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
+      tooltip.style.zIndex = "2147483647";
+      tooltip.style.opacity = "0";
+      tooltip.style.pointerEvents = "none";
+      tooltip.style.transition = "opacity 0.12s ease-in-out";
+      tooltip.style.whiteSpace = "nowrap";
+      tooltip.style.boxSizing = "border-box";
+      tooltip.style.maxWidth = "calc(100vw - 16px)";
 
-      const show = () => tooltip.classList.add("visible");
-      const hide = () => tooltip.classList.remove("visible");
+      const arrow = document.createElement("div");
+      arrow.style.position = "absolute";
+      arrow.style.width = "10px";
+      arrow.style.height = "10px";
+      arrow.style.background = "#3a3f44";
+      arrow.style.transform = "rotate(45deg)";
+      arrow.style.left = "50%";
+      arrow.style.marginLeft = "-5px";
 
-      marker.addEventListener("mouseenter", show);
-      marker.addEventListener("focus", show);
-      marker.addEventListener("mouseleave", hide);
-      marker.addEventListener("blur", hide);
+      tooltip.appendChild(arrow);
+
+      document.body.appendChild(tooltip);
+
+      this._tooltip = tooltip;
+      this._tooltipArrow = arrow;
+    }
+
+    _showTooltip(anchorRect, html) {
+      if (!this._state.showTooltip) return;
+
+      this._createTooltip();
+
+      const tooltip = this._tooltip;
+      const arrow = this._tooltipArrow;
+
+      tooltip.innerHTML = html;
+      tooltip.appendChild(arrow);
+
+      tooltip.style.opacity = "0";
+      tooltip.style.visibility = "hidden";
+      tooltip.style.left = "0px";
+      tooltip.style.top = "0px";
+
+      const viewportW = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+      const gap = 12;
+      const margin = 8;
+
+      const markerCenterX = anchorRect.left + anchorRect.width / 2;
+      const markerTopY = anchorRect.top;
+      const markerBottomY = anchorRect.bottom;
+
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const tooltipW = tooltipRect.width;
+      const tooltipH = tooltipRect.height;
+
+      let placement = "top";
+      let top = markerTopY - tooltipH - gap;
+
+      if (top < margin) {
+        placement = "bottom";
+        top = markerBottomY + gap;
+      }
+
+      if (top + tooltipH > viewportH - margin) {
+        placement = "top";
+        top = Math.max(margin, markerTopY - tooltipH - gap);
+      }
+
+      let left = markerCenterX - tooltipW / 2;
+      left = Math.max(margin, Math.min(left, viewportW - tooltipW - margin));
+
+      const arrowLeft = markerCenterX - left;
+      const safeArrowLeft = Math.max(12, Math.min(arrowLeft, tooltipW - 12));
+
+      if (placement === "top") {
+        arrow.style.top = "";
+        arrow.style.bottom = "-5px";
+      } else {
+        arrow.style.bottom = "";
+        arrow.style.top = "-5px";
+      }
+
+      arrow.style.left = `${safeArrowLeft}px`;
+      arrow.style.marginLeft = "-5px";
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.visibility = "visible";
+      tooltip.style.opacity = "1";
+    }
+
+    _hideTooltip() {
+      if (this._tooltip) {
+        this._tooltip.style.opacity = "0";
+        this._tooltip.style.visibility = "hidden";
+      }
+    }
+
+    _removeTooltip() {
+      if (this._tooltip && this._tooltip.parentNode) {
+        this._tooltip.parentNode.removeChild(this._tooltip);
+      }
+
+      this._tooltip = null;
+      this._tooltipArrow = null;
+    }
+
+    _attachTooltipHandlers(actual, ref, varianceRaw, variancePct) {
+      const marker = this.shadowRoot.querySelector(".marker-hit");
+
+      if (!marker) return;
+
+      const html = `
+        <div style="display:grid;grid-template-columns:auto auto;column-gap:20px;row-gap:4px;align-items:center;">
+          <div style="color:#d9d9d9;">Actual</div>
+          <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatNumber(actual, this._state.rawDecimals))}</div>
+          <div style="color:#d9d9d9;">Reference</div>
+          <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatNumber(ref, this._state.rawDecimals))}</div>
+          <div style="color:#d9d9d9;">Variance</div>
+          <div style="font-weight:700;text-align:right;">${this._escapeHtml(this._formatVariance(varianceRaw, variancePct))}</div>
+        </div>
+      `;
+
+      marker.addEventListener("mouseenter", () => {
+        this._showTooltip(marker.getBoundingClientRect(), html);
+      });
+
+      marker.addEventListener("mousemove", () => {
+        this._showTooltip(marker.getBoundingClientRect(), html);
+      });
+
+      marker.addEventListener("mouseleave", () => {
+        this._hideTooltip();
+      });
     }
 
     render() {
@@ -452,8 +571,8 @@
         return;
       }
 
-      const width = Math.max(this._root.clientWidth || this.clientWidth || 320, 160);
-      const height = Math.max(this._root.clientHeight || this.clientHeight || 120, 90);
+      const width = Math.max(this.clientWidth || 320, 160);
+      const height = Math.max(this.clientHeight || 120, 90);
 
       const margin = {
         left: 28,
@@ -487,7 +606,6 @@
 
       const varianceRaw = actual - ref;
       const variancePct = ref !== 0 ? varianceRaw / ref : null;
-      const varianceLabel = this._formatVariance(varianceRaw, variancePct);
 
       const arrowDir = actual >= ref ? 1 : -1;
       const arrowStartX = arrowDir > 0 ? xRef : xActual;
@@ -496,11 +614,10 @@
 
       const showArrow = (s.showVarianceIndicator || s.varianceOnHover) && arrowLength > 4;
       const varianceLayerClass = s.showVarianceIndicator ? "variance-layer always-visible" : "variance-layer";
+      const dashArray = s.varianceLineStyle === "dashed" ? "3 3" : "";
 
       const showReferenceLine = s.showReferenceLine || s.referenceLineOnHover;
       const referenceLineClass = s.showReferenceLine ? "reference-line-layer always-visible" : "reference-line-layer";
-
-      const dashArray = s.varianceLineStyle === "dashed" ? "3 3" : "";
 
       const labelFont = Math.max(10, Math.min(13, height * 0.1));
       const valueFont = Math.max(11, Math.min(15, height * 0.12));
@@ -508,26 +625,6 @@
       const outsideLeft = actual < axisMin;
       const outsideRight = actual > axisMax;
       const outsideHint = outsideLeft ? "◀" : outsideRight ? "▶" : "";
-
-      const tooltipTop = Math.max(10, varianceY - 6);
-      const tooltipLeft = Math.max(84, Math.min(width - 84, xActual));
-
-      const tooltipHtml = s.showTooltip ? `
-        <div class="tooltip" style="left:${tooltipLeft}px; top:${tooltipTop}px;">
-          <div class="tooltip-row">
-            <span class="tooltip-label">Actual</span>
-            <span class="tooltip-value">${this._escapeHtml(this._formatNumber(actual, s.rawDecimals))}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Reference</span>
-            <span class="tooltip-value">${this._escapeHtml(this._formatNumber(ref, s.rawDecimals))}</span>
-          </div>
-          <div class="tooltip-row">
-            <span class="tooltip-label">Variance</span>
-            <span class="tooltip-value">${this._escapeHtml(varianceLabel || "–")}</span>
-          </div>
-        </div>
-      ` : "";
 
       this._root.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="KPI Pipeline Bullet">
@@ -564,14 +661,8 @@
             </g>
           ` : ""}
 
-          <g class="marker-layer" tabindex="0">
-            <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}"
-                  stroke="${s.markerColor}" stroke-width="3"></line>
-            <circle cx="${xActual}" cy="${markerTop}" r="4" fill="${s.markerColor}"></circle>
-            <rect class="marker-hit-area"
-                  x="${xActual - 14}" y="${Math.min(varianceY - 14, markerTop - 18)}"
-                  width="28" height="${markerBottom - Math.min(varianceY - 14, markerTop - 18) + 8}"></rect>
-          </g>
+          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="3"></line>
+          <circle cx="${xActual}" cy="${markerTop}" r="6" fill="${s.markerColor}" class="marker-hit"></circle>
 
           ${outsideHint ? `
             <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
@@ -584,22 +675,20 @@
                   text-anchor="middle"
                   font-size="${valueFont}"
                   fill="${s.markerColor}">
-              ${this._escapeHtml(this._formatNumber(actual, s.rawDecimals))}
+              ${this._formatNumber(actual, s.rawDecimals)}
             </text>
           ` : ""}
 
           ${s.showAxisLabels ? `
-            <text x="${xMin}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(axisMin, s.rawDecimals))}</text>
-            <text x="${xRef}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(ref, s.rawDecimals))}</text>
-            <text x="${xTargetEnd}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(targetEnd, s.rawDecimals))}</text>
-            <text x="${xMax}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(axisMax, s.rawDecimals))}</text>
+            <text x="${xMin}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMin, s.rawDecimals)}</text>
+            <text x="${xRef}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(ref, s.rawDecimals)}</text>
+            <text x="${xTargetEnd}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(targetEnd, s.rawDecimals)}</text>
+            <text x="${xMax}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMax, s.rawDecimals)}</text>
           ` : ""}
         </svg>
-
-        ${tooltipHtml}
       `;
 
-      this._bindTooltip();
+      this._attachTooltipHandlers(actual, ref, varianceRaw, variancePct);
     }
   }
 

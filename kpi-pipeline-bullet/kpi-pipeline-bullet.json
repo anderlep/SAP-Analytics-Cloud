@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker, hover reference line, hover variance indicator and tooltip.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker, hover variance, hover reference line and smart tooltip.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
