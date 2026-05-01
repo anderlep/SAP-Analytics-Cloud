@@ -24,11 +24,6 @@
       "type": "number",
       "default": 450
     },
-  "events": {
-    "onClick": {
-      "description": "Triggered when widget is clicked"
-    }
-  },
     "referenceValue": {
       "type": "number",
       "default": 500
@@ -157,5 +152,6 @@
       ],
       "returnType": "void"
     }
-  }
+  },
+  "events": {}
 }
