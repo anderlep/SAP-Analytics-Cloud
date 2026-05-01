@@ -9,7 +9,7 @@
       this._rules = "";
       this._customCss = "";
       this._config =
-        '{"label":"Filter","op":"Operator","value":"Value","showOperator":true,"emptyText":"Nejsou dostupná žádná data."}';
+        '{"label":"Column 1","op":"Operator","value":"Column 2","showOperator":false,"emptyText":"No data available."}';
       this._styleConfig =
         '{"template":"default","columnWidthMode":"auto","showTotal":false}';
     }
@@ -184,19 +184,19 @@
         var parsed = JSON.parse(this._config || "{}");
 
         return {
-          label: parsed.label || "Filter",
-          op: parsed.op || "Operator",
-          value: parsed.value || "Value",
-          showOperator: parsed.showOperator !== false,
-          emptyText: parsed.emptyText || "Nejsou dostupná žádná data."
-        };
+        label: parsed.label || "Column 1",
+        op: parsed.op || "Operator",
+        value: parsed.value || "Column 2",
+        showOperator: parsed.showOperator === true,
+        emptyText: parsed.emptyText || "No data available."
+      };
       } catch (e) {
         return {
-          label: "Filter",
+          label: "Column 1",
           op: "Operator",
-          value: "Value",
-          showOperator: true,
-          emptyText: "Nejsou dostupná žádná data."
+          value: "Column 2",
+          showOperator: false,
+          emptyText: "No data available."
         };
       }
     }
