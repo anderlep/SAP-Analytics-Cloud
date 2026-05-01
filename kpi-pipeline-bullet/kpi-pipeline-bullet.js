@@ -9,41 +9,113 @@
         font-family: "72", Arial, Helvetica, sans-serif;
         box-sizing: border-box;
       }
+
       .root {
+        position: relative;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
         padding: 8px;
         color: var(--kpb-text-color, #32363a);
       }
+
       svg {
         width: 100%;
         height: 100%;
         display: block;
         overflow: visible;
       }
+
       text {
         font-family: "72", Arial, Helvetica, sans-serif;
         fill: var(--kpb-text-color, #32363a);
       }
+
       .muted {
         fill: #6a6d70;
       }
+
       .error {
         color: #bb0000;
         font-size: 12px;
         padding: 8px;
       }
-      .variance-layer {
+
+      .variance-layer,
+      .reference-line-layer {
         opacity: 0;
         transition: opacity 0.15s ease-in-out;
         pointer-events: none;
       }
-      :host(:hover) .variance-layer {
+
+      :host(:hover) .variance-layer,
+      :host(:hover) .reference-line-layer {
         opacity: 1;
       }
-      .variance-layer.always-visible {
+
+      .variance-layer.always-visible,
+      .reference-line-layer.always-visible {
         opacity: 1;
+      }
+
+      .marker-layer {
+        cursor: default;
+      }
+
+      .marker-hit-area {
+        fill: transparent;
+        pointer-events: all;
+      }
+
+      .tooltip {
+        position: absolute;
+        z-index: 10;
+        min-width: 150px;
+        max-width: 260px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        background: rgba(50, 54, 58, 0.96);
+        color: #ffffff;
+        font-size: 12px;
+        line-height: 1.35;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+        transform: translate(-50%, -100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease-in-out;
+        white-space: nowrap;
+      }
+
+      .tooltip.visible {
+        opacity: 1;
+      }
+
+      .tooltip::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -6px;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid rgba(50, 54, 58, 0.96);
+      }
+
+      .tooltip-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .tooltip-label {
+        color: #d9d9d9;
+      }
+
+      .tooltip-value {
+        color: #ffffff;
+        font-weight: 600;
       }
     </style>
     <div class="root"></div>
@@ -52,6 +124,7 @@
   class KpiPipelineBullet extends HTMLElement {
     constructor() {
       super();
+
       this.attachShadow({ mode: "open" });
       this.shadowRoot.appendChild(template.content.cloneNode(true));
       this._root = this.shadowRoot.querySelector(".root");
@@ -75,13 +148,17 @@
         showLabels: true,
         showMarkerLabel: true,
         showAxisLabels: false,
-        showReferenceLine: true,
+
+        showReferenceLine: false,
+        referenceLineOnHover: true,
 
         showVarianceIndicator: false,
         varianceOnHover: true,
         varianceLineStyle: "dashed",
         varianceDisplayMode: "both",
         varianceSeparator: " | ",
+
+        showTooltip: true,
 
         rawDecimals: 0,
         percentDecimals: 1,
@@ -96,9 +173,11 @@
         "lower-bound-zone-percentage", "target-zone-percentage", "upper-bound-zone-percentage",
         "lower-bound-zone-color", "target-zone-color", "upper-bound-zone-color",
         "marker-color", "reference-line-color", "variance-color",
-        "show-labels", "show-marker-label", "show-axis-labels", "show-reference-line",
+        "show-labels", "show-marker-label", "show-axis-labels",
+        "show-reference-line", "reference-line-on-hover",
         "show-variance-indicator", "variance-on-hover", "variance-line-style",
         "variance-display-mode", "variance-separator",
+        "show-tooltip",
         "raw-decimals", "percent-decimals", "unit", "clamp-marker"
       ];
     }
@@ -111,11 +190,14 @@
     }
 
     disconnectedCallback() {
-      if (this._resizeObserver) this._resizeObserver.disconnect();
+      if (this._resizeObserver) {
+        this._resizeObserver.disconnect();
+      }
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
       if (oldValue === newValue) return;
+
       const prop = this._attributeToProperty(name);
       if (prop in this._state) {
         this._state[prop] = this._parseValue(prop, newValue);
@@ -202,6 +284,9 @@
     get showReferenceLine() { return this._state.showReferenceLine; }
     set showReferenceLine(v) { this._set("showReferenceLine", v); }
 
+    get referenceLineOnHover() { return this._state.referenceLineOnHover; }
+    set referenceLineOnHover(v) { this._set("referenceLineOnHover", v); }
+
     get showVarianceIndicator() { return this._state.showVarianceIndicator; }
     set showVarianceIndicator(v) { this._set("showVarianceIndicator", v); }
 
@@ -216,6 +301,9 @@
 
     get varianceSeparator() { return this._state.varianceSeparator; }
     set varianceSeparator(v) { this._set("varianceSeparator", v); }
+
+    get showTooltip() { return this._state.showTooltip; }
+    set showTooltip(v) { this._set("showTooltip", v); }
 
     get rawDecimals() { return this._state.rawDecimals; }
     set rawDecimals(v) { this._set("rawDecimals", v); }
@@ -246,7 +334,9 @@
       this._state.lowerBoundZoneColor = String(lowerBoundZoneColor);
       this._state.targetZoneColor = String(targetZoneColor);
       this._state.upperBoundZoneColor = String(upperBoundZoneColor);
-      if (markerColor !== undefined) this._state.markerColor = String(markerColor);
+      if (markerColor !== undefined) {
+        this._state.markerColor = String(markerColor);
+      }
       this.render();
     }
 
@@ -261,19 +351,21 @@
         const obj = typeof cfg === "string" ? JSON.parse(cfg) : cfg;
 
         Object.keys(obj).forEach((key) => {
-          if (key in this._state) {
-            this._state[key] = obj[key];
+          if (Object.prototype.hasOwnProperty.call(this._state, key)) {
+            this._state[key] = this._parseValue(key, obj[key]);
           }
         });
 
         this.render();
       } catch (e) {
         console.error("Invalid config JSON", e);
+        this._root.innerHTML = `<div class="error">Invalid config JSON.</div>`;
       }
     }
 
     _formatNumber(value, decimals) {
       if (!Number.isFinite(value)) return "–";
+
       return value.toLocaleString(undefined, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
@@ -297,7 +389,32 @@
 
       if (mode === "raw") return rawText;
       if (mode === "percent") return pctText;
+
       return `${rawText}${this._state.varianceSeparator}${pctText}`;
+    }
+
+    _escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    _bindTooltip() {
+      const tooltip = this.shadowRoot.querySelector(".tooltip");
+      const marker = this.shadowRoot.querySelector(".marker-layer");
+
+      if (!tooltip || !marker) return;
+
+      const show = () => tooltip.classList.add("visible");
+      const hide = () => tooltip.classList.remove("visible");
+
+      marker.addEventListener("mouseenter", show);
+      marker.addEventListener("focus", show);
+      marker.addEventListener("mouseleave", hide);
+      marker.addEventListener("blur", hide);
     }
 
     render() {
@@ -326,7 +443,6 @@
       const upperSize = ref * upperPct / 100;
 
       const axisMin = ref - lowerSize;
-      const targetStart = ref;
       const targetEnd = ref + targetSize;
       const axisMax = targetEnd + upperSize;
       const axisRange = axisMax - axisMin;
@@ -336,8 +452,8 @@
         return;
       }
 
-      const width = Math.max(this.clientWidth || 320, 160);
-      const height = Math.max(this.clientHeight || 120, 90);
+      const width = Math.max(this._root.clientWidth || this.clientWidth || 320, 160);
+      const height = Math.max(this._root.clientHeight || this.clientHeight || 120, 90);
 
       const margin = {
         left: 28,
@@ -380,6 +496,10 @@
 
       const showArrow = (s.showVarianceIndicator || s.varianceOnHover) && arrowLength > 4;
       const varianceLayerClass = s.showVarianceIndicator ? "variance-layer always-visible" : "variance-layer";
+
+      const showReferenceLine = s.showReferenceLine || s.referenceLineOnHover;
+      const referenceLineClass = s.showReferenceLine ? "reference-line-layer always-visible" : "reference-line-layer";
+
       const dashArray = s.varianceLineStyle === "dashed" ? "3 3" : "";
 
       const labelFont = Math.max(10, Math.min(13, height * 0.1));
@@ -388,6 +508,26 @@
       const outsideLeft = actual < axisMin;
       const outsideRight = actual > axisMax;
       const outsideHint = outsideLeft ? "◀" : outsideRight ? "▶" : "";
+
+      const tooltipTop = Math.max(10, varianceY - 6);
+      const tooltipLeft = Math.max(84, Math.min(width - 84, xActual));
+
+      const tooltipHtml = s.showTooltip ? `
+        <div class="tooltip" style="left:${tooltipLeft}px; top:${tooltipTop}px;">
+          <div class="tooltip-row">
+            <span class="tooltip-label">Actual</span>
+            <span class="tooltip-value">${this._escapeHtml(this._formatNumber(actual, s.rawDecimals))}</span>
+          </div>
+          <div class="tooltip-row">
+            <span class="tooltip-label">Reference</span>
+            <span class="tooltip-value">${this._escapeHtml(this._formatNumber(ref, s.rawDecimals))}</span>
+          </div>
+          <div class="tooltip-row">
+            <span class="tooltip-label">Variance</span>
+            <span class="tooltip-value">${this._escapeHtml(varianceLabel || "–")}</span>
+          </div>
+        </div>
+      ` : "";
 
       this._root.innerHTML = `
         <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="KPI Pipeline Bullet">
@@ -401,8 +541,11 @@
           <rect x="${xRef}" y="${barY}" width="${xTargetEnd - xRef}" height="${barH}" fill="${s.targetZoneColor}"></rect>
           <rect x="${xTargetEnd}" y="${barY}" width="${xMax - xTargetEnd}" height="${barH}" fill="${s.upperBoundZoneColor}" rx="2"></rect>
 
-          ${s.showReferenceLine ? `
-            <line x1="${xRef}" y1="${barY - 7}" x2="${xRef}" y2="${barY + barH + 7}" stroke="${s.referenceLineColor}" stroke-width="2"></line>
+          ${showReferenceLine ? `
+            <g class="${referenceLineClass}">
+              <line x1="${xRef}" y1="${barY - 7}" x2="${xRef}" y2="${barY + barH + 7}"
+                    stroke="${s.referenceLineColor}" stroke-width="2"></line>
+            </g>
           ` : ""}
 
           ${showArrow ? `
@@ -418,18 +561,17 @@
                     stroke="${s.varianceColor}" stroke-width="1.2"
                     stroke-dasharray="${dashArray}"
                     marker-end="url(#pb-arrow-head)"></line>
-
-              ${varianceLabel ? `
-                <text x="${xActual}" y="${varianceY - 6}"
-                      text-anchor="middle"
-                      font-size="${labelFont}"
-                      class="muted">${varianceLabel}</text>
-              ` : ""}
             </g>
           ` : ""}
 
-          <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}" stroke="${s.markerColor}" stroke-width="3"></line>
-          <circle cx="${xActual}" cy="${markerTop}" r="4" fill="${s.markerColor}"></circle>
+          <g class="marker-layer" tabindex="0">
+            <line x1="${xActual}" y1="${markerTop}" x2="${xActual}" y2="${markerBottom}"
+                  stroke="${s.markerColor}" stroke-width="3"></line>
+            <circle cx="${xActual}" cy="${markerTop}" r="4" fill="${s.markerColor}"></circle>
+            <rect class="marker-hit-area"
+                  x="${xActual - 14}" y="${Math.min(varianceY - 14, markerTop - 18)}"
+                  width="28" height="${markerBottom - Math.min(varianceY - 14, markerTop - 18) + 8}"></rect>
+          </g>
 
           ${outsideHint ? `
             <text x="${xActual}" y="${markerBottom + 14}" text-anchor="middle" font-size="${valueFont}" fill="${s.markerColor}">
@@ -442,20 +584,26 @@
                   text-anchor="middle"
                   font-size="${valueFont}"
                   fill="${s.markerColor}">
-              ${this._formatNumber(actual, s.rawDecimals)}
+              ${this._escapeHtml(this._formatNumber(actual, s.rawDecimals))}
             </text>
           ` : ""}
 
           ${s.showAxisLabels ? `
-            <text x="${xMin}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMin, s.rawDecimals)}</text>
-            <text x="${xRef}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(ref, s.rawDecimals)}</text>
-            <text x="${xTargetEnd}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(targetEnd, s.rawDecimals)}</text>
-            <text x="${xMax}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._formatNumber(axisMax, s.rawDecimals)}</text>
+            <text x="${xMin}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(axisMin, s.rawDecimals))}</text>
+            <text x="${xRef}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(ref, s.rawDecimals))}</text>
+            <text x="${xTargetEnd}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(targetEnd, s.rawDecimals))}</text>
+            <text x="${xMax}" y="${axisLabelY}" text-anchor="middle" font-size="${labelFont}" class="muted">${this._escapeHtml(this._formatNumber(axisMax, s.rawDecimals))}</text>
           ` : ""}
         </svg>
+
+        ${tooltipHtml}
       `;
+
+      this._bindTooltip();
     }
   }
 
-  customElements.define("kpi-pipeline-bullet", KpiPipelineBullet);
+  if (!customElements.get("kpi-pipeline-bullet")) {
+    customElements.define("kpi-pipeline-bullet", KpiPipelineBullet);
+  }
 })();

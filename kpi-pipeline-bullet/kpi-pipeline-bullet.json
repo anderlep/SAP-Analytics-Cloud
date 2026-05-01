@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker and variance indicator.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, actual marker, hover reference line, hover variance indicator and tooltip.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -10,7 +10,6 @@
   "icon": "https://anderlep.github.io/SAP-Analytics-Cloud/kpi-pipeline-bullet/icon.png",
   "supportsMobile": true,
   "supportsExport": true,
-
   "webcomponents": [
     {
       "kind": "main",
@@ -20,7 +19,6 @@
       "ignoreIntegrity": true
     }
   ],
-
   "properties": {
     "actualValue": {
       "type": "number",
@@ -30,7 +28,6 @@
       "type": "number",
       "default": 500
     },
-
     "lowerBoundZonePercentage": {
       "type": "number",
       "default": 40
@@ -43,7 +40,6 @@
       "type": "number",
       "default": 40
     },
-
     "lowerBoundZoneColor": {
       "type": "string",
       "default": "#E74C3C"
@@ -56,127 +52,144 @@
       "type": "string",
       "default": "#F1C40F"
     },
-
     "markerColor": {
       "type": "string",
       "default": "#2F3C7E"
     },
-
     "referenceLineColor": {
       "type": "string",
       "default": "#111111"
     },
-
     "varianceColor": {
       "type": "string",
       "default": "#5E6978"
     },
-
     "showLabels": {
       "type": "boolean",
       "default": true
     },
-
     "showMarkerLabel": {
       "type": "boolean",
       "default": true
     },
-
     "showAxisLabels": {
       "type": "boolean",
       "default": false
     },
-
     "showReferenceLine": {
+      "type": "boolean",
+      "default": false
+    },
+    "referenceLineOnHover": {
       "type": "boolean",
       "default": true
     },
-
     "showVarianceIndicator": {
       "type": "boolean",
       "default": false
     },
-
     "varianceOnHover": {
       "type": "boolean",
       "default": true
     },
-
     "varianceLineStyle": {
       "type": "string",
       "default": "dashed"
     },
-
     "varianceDisplayMode": {
       "type": "string",
       "default": "both"
     },
-
     "varianceSeparator": {
       "type": "string",
       "default": " | "
     },
-
+    "showTooltip": {
+      "type": "boolean",
+      "default": true
+    },
     "rawDecimals": {
       "type": "number",
       "default": 0
     },
-
     "percentDecimals": {
       "type": "number",
       "default": 1
     },
-
     "unit": {
       "type": "string",
       "default": ""
     },
-
     "clampMarker": {
       "type": "boolean",
       "default": true
     }
   },
-
   "methods": {
     "setData": {
       "description": "Set actual and reference values.",
       "parameters": [
-        { "name": "actualValue", "type": "number" },
-        { "name": "referenceValue", "type": "number" }
+        {
+          "name": "actualValue",
+          "type": "number"
+        },
+        {
+          "name": "referenceValue",
+          "type": "number"
+        }
       ],
       "returnType": "void"
     },
-
     "setZones": {
       "description": "Set lower, target and upper zone percentages. Sum must be 100.",
       "parameters": [
-        { "name": "lowerBoundZonePercentage", "type": "number" },
-        { "name": "targetZonePercentage", "type": "number" },
-        { "name": "upperBoundZonePercentage", "type": "number" }
+        {
+          "name": "lowerBoundZonePercentage",
+          "type": "number"
+        },
+        {
+          "name": "targetZonePercentage",
+          "type": "number"
+        },
+        {
+          "name": "upperBoundZonePercentage",
+          "type": "number"
+        }
       ],
       "returnType": "void"
     },
-
     "setColors": {
       "description": "Set zone colors and optionally marker color.",
       "parameters": [
-        { "name": "lowerBoundZoneColor", "type": "string" },
-        { "name": "targetZoneColor", "type": "string" },
-        { "name": "upperBoundZoneColor", "type": "string" },
-        { "name": "markerColor", "type": "string" }
+        {
+          "name": "lowerBoundZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "targetZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "upperBoundZoneColor",
+          "type": "string"
+        },
+        {
+          "name": "markerColor",
+          "type": "string"
+        }
       ],
       "returnType": "void"
     },
-
     "setVarianceDisplayMode": {
       "description": "Set variance display mode.",
       "parameters": [
-        { "name": "mode", "type": "string" }
+        {
+          "name": "mode",
+          "type": "string"
+        }
       ],
       "returnType": "void"
     },
-
     "setConfig": {
       "description": "Set multiple properties via JSON config.",
       "parameters": [
@@ -188,6 +201,5 @@
       "returnType": "void"
     }
   },
-
   "events": {}
 }
