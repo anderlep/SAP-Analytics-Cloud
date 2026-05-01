@@ -137,6 +137,13 @@
 
         responsiveScaling: false,
 
+        adaptiveLayout: true,
+        compactHeightThreshold: 95,
+        minimalHeightThreshold: 70,
+        hideVarianceWhenCompact: true,
+        hideReferenceLineWhenCompact: true,
+        hideMarkerLabelWhenMinimal: true,
+
         paddingTop: 34,
         paddingLeft: 28,
         paddingRight: 28,
@@ -193,6 +200,12 @@
         "axis-font-size",
         "marker-font-size",
         "responsive-scaling",
+        "adaptive-layout",
+        "compact-height-threshold",
+        "minimal-height-threshold",
+        "hide-variance-when-compact",
+        "hide-reference-line-when-compact",
+        "hide-marker-label-when-minimal",
         "padding-top",
         "padding-left",
         "padding-right",
@@ -392,6 +405,24 @@
 
     get responsiveScaling() { return this._state.responsiveScaling; }
     set responsiveScaling(v) { this._set("responsiveScaling", v); }
+
+    get adaptiveLayout() { return this._state.adaptiveLayout; }
+    set adaptiveLayout(v) { this._set("adaptiveLayout", v); }
+
+    get compactHeightThreshold() { return this._state.compactHeightThreshold; }
+    set compactHeightThreshold(v) { this._set("compactHeightThreshold", v); }
+
+    get minimalHeightThreshold() { return this._state.minimalHeightThreshold; }
+    set minimalHeightThreshold(v) { this._set("minimalHeightThreshold", v); }
+
+    get hideVarianceWhenCompact() { return this._state.hideVarianceWhenCompact; }
+    set hideVarianceWhenCompact(v) { this._set("hideVarianceWhenCompact", v); }
+
+    get hideReferenceLineWhenCompact() { return this._state.hideReferenceLineWhenCompact; }
+    set hideReferenceLineWhenCompact(v) { this._set("hideReferenceLineWhenCompact", v); }
+
+    get hideMarkerLabelWhenMinimal() { return this._state.hideMarkerLabelWhenMinimal; }
+    set hideMarkerLabelWhenMinimal(v) { this._set("hideMarkerLabelWhenMinimal", v); }
 
     get paddingTop() { return this._state.paddingTop; }
     set paddingTop(v) { this._set("paddingTop", v); }
@@ -845,6 +876,16 @@
       const width = Math.max(this.clientWidth || 320, 160);
       const height = Math.max(this.clientHeight || 120, 90);
 
+      const adaptiveLayout = Boolean(s.adaptiveLayout);
+      const isCompactHeight = adaptiveLayout && height < Number(s.compactHeightThreshold);
+      const isMinimalHeight = adaptiveLayout && height < Number(s.minimalHeightThreshold);
+
+      const effectiveVarianceOnHover = isCompactHeight && s.hideVarianceWhenCompact ? false : s.varianceOnHover;
+      const effectiveShowVarianceIndicator = isCompactHeight && s.hideVarianceWhenCompact ? false : s.showVarianceIndicator;
+      const effectiveReferenceLineOnHover = isCompactHeight && s.hideReferenceLineWhenCompact ? false : s.referenceLineOnHover;
+      const effectiveShowReferenceLine = isCompactHeight && s.hideReferenceLineWhenCompact ? false : s.showReferenceLine;
+      const effectiveShowMarkerLabel = isMinimalHeight && s.hideMarkerLabelWhenMinimal ? false : s.showMarkerLabel;
+
       const margin = {
         left: Math.max(0, Number(s.paddingLeft)),
         right: Math.max(0, Number(s.paddingRight)),
@@ -872,12 +913,30 @@
       let barY = Math.max(margin.top + 8, height * 0.38);
       const axisLabelY = height - 8;
       const markerExtension = Math.max(6, barH * 0.45);
+      const varianceVerticalOffset = Math.max(18, barH * 1.35);
       const markerLabelAutoGap = Math.max(
         10,
         markerRadius + markerWidth + 2,
         Math.round(barH * 0.35),
         Math.round(valueFont * 0.75)
       );
+
+      /*
+       * Auto layout:
+       * - keep enough top space for hover variance
+       * - keep enough bottom space for marker label
+       * - never solve bottom overlap by pushing the variance outside the widget
+       */
+      const needsVarianceTopSpace = Boolean(effectiveShowVarianceIndicator || effectiveVarianceOnHover);
+      const minBarY = margin.top + (
+        needsVarianceTopSpace
+          ? varianceVerticalOffset + Math.max(6, markerRadius)
+          : Math.max(6, markerRadius + markerWidth)
+      );
+
+      if (barY < minBarY) {
+        barY = minBarY;
+      }
 
       let markerTop = barY - markerExtension;
       let markerBottom = barY + barH + markerExtension;
@@ -886,7 +945,6 @@
         ? axisLabelY - Math.max(14, valueFont + 5)
         : height - 8;
 
-      const minBarY = margin.top + Math.max(6, markerRadius + markerWidth);
       if (markerLabelCandidateY > markerLabelMaxY && barY > minBarY) {
         const requiredShift = markerLabelCandidateY - markerLabelMaxY;
         const availableShift = barY - minBarY;
@@ -897,7 +955,7 @@
         markerLabelCandidateY = markerBottom + markerLabelAutoGap + valueFont;
       }
 
-      const varianceY = barY - Math.max(18, barH * 1.35);
+      const varianceY = Math.max(margin.top + 2, barY - varianceVerticalOffset);
       const markerLabelY = Math.min(markerLabelMaxY, markerLabelCandidateY);
 
       const scale = (value) => plotX + ((value - axisMin) / axisRange) * plotW;
@@ -933,12 +991,12 @@
       const arrowEndX = arrowDir > 0 ? xActual : xRef;
       const arrowLength = Math.abs(arrowEndX - arrowStartX);
 
-      const showArrow = (s.showVarianceIndicator || s.varianceOnHover) && arrowLength > 4;
-      const varianceLayerClass = s.showVarianceIndicator ? "variance-layer always-visible" : "variance-layer";
+      const showArrow = (effectiveShowVarianceIndicator || effectiveVarianceOnHover) && arrowLength > 4;
+      const varianceLayerClass = effectiveShowVarianceIndicator ? "variance-layer always-visible" : "variance-layer";
       const dashArray = s.varianceLineStyle === "dashed" ? "3 3" : "";
 
-      const showReferenceLine = s.showReferenceLine || s.referenceLineOnHover;
-      const referenceLineClass = s.showReferenceLine ? "reference-line-layer always-visible" : "reference-line-layer";
+      const showReferenceLine = effectiveShowReferenceLine || effectiveReferenceLineOnHover;
+      const referenceLineClass = effectiveShowReferenceLine ? "reference-line-layer always-visible" : "reference-line-layer";
 
       const outsideLeft = actual < axisMin;
       const outsideRight = actual > axisMax;
@@ -988,7 +1046,7 @@
             </text>
           ` : ""}
 
-          ${(s.showLabels && s.showMarkerLabel) ? `
+          ${(s.showLabels && effectiveShowMarkerLabel) ? `
             <text x="${xActual}" y="${markerLabelY}"
                   text-anchor="middle"
                   font-size="${valueFont}"

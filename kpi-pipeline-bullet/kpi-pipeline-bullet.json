@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, hover variance, hover reference line, smart tooltip and automatic marker label spacing.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line and smart tooltip.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -159,6 +159,30 @@
     "responsiveScaling": {
       "type": "boolean",
       "default": false
+    },
+    "adaptiveLayout": {
+      "type": "boolean",
+      "default": true
+    },
+    "compactHeightThreshold": {
+      "type": "number",
+      "default": 95
+    },
+    "minimalHeightThreshold": {
+      "type": "number",
+      "default": 70
+    },
+    "hideVarianceWhenCompact": {
+      "type": "boolean",
+      "default": true
+    },
+    "hideReferenceLineWhenCompact": {
+      "type": "boolean",
+      "default": true
+    },
+    "hideMarkerLabelWhenMinimal": {
+      "type": "boolean",
+      "default": true
     },
     "paddingTop": {
       "type": "number",
