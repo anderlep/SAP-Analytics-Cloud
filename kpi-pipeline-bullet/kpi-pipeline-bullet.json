@@ -25,16 +25,12 @@
         {
           "id": "dimensions",
           "description": "Dimension breakdown (uses the first selected dimension when more dimensions are assigned)",
-          "type": "dimension",
-          "min": 0,
-          "max": 20
+          "type": "dimension"
         },
         {
           "id": "measures",
           "description": "Measures (uses the first two selected measures: actual and reference)",
-          "type": "mainStructureMember",
-          "min": 0,
-          "max": 20
+          "type": "mainStructureMember"
         }
       ]
     }
