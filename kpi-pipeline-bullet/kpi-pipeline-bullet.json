@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.8.0",
+  "version": "1.8.2",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line, smart tooltip, script-driven result set support and optional dimension breakdown.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable styling, semantic rules, adaptive layout and script-driven dimension breakdown via manually built JSON items/result sets.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -264,14 +264,6 @@
       "type": "string",
       "default": "top"
     },
-    "dimensionLabelFontSize": {
-      "type": "number",
-      "default": 12
-    },
-    "dimensionLabelColor": {
-      "type": "string",
-      "default": ""
-    },
     "dimensionId": {
       "type": "string",
       "default": ""
@@ -284,7 +276,7 @@
       "type": "string",
       "default": ""
     },
-    "resultSetFilters": {
+    "breakdownItems": {
       "type": "string",
       "default": "[]"
     }
@@ -364,32 +356,8 @@
       ],
       "returnType": "void"
     },
-    "setDataJson": {
-      "description": "Set widget data from normalized JSON. Supports single bullet and item array for dimension breakdown.",
-      "parameters": [
-        {
-          "name": "dataJson",
-          "type": "string"
-        }
-      ],
-      "returnType": "void"
-    },
-    "setResultSet": {
-      "description": "Set data from SAC getResultSet() JSON and optional mapping/filter JSON.",
-      "parameters": [
-        {
-          "name": "resultSetJson",
-          "type": "string"
-        },
-        {
-          "name": "mappingJson",
-          "type": "string"
-        }
-      ],
-      "returnType": "void"
-    },
     "setDimensionBreakdownEnabled": {
-      "description": "Enable or disable dimension breakdown rendering.",
+      "description": "Enable or disable rendering of multiple bullet charts from breakdown items.",
       "parameters": [
         {
           "name": "enabled",
@@ -399,7 +367,7 @@
       "returnType": "void"
     },
     "setDimensionBinding": {
-      "description": "Set optional dimension, actual measure and reference measure identifiers. Empty values use first dimension and first two measures.",
+      "description": "Set optional dimension and measure ids for result set parsing.",
       "parameters": [
         {
           "name": "dimensionId",
@@ -411,6 +379,82 @@
         },
         {
           "name": "referenceMeasureId",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "clearItems": {
+      "description": "Clear current breakdown items.",
+      "parameters": [],
+      "returnType": "void"
+    },
+    "addItem": {
+      "description": "Add one breakdown item using primitive SAC scripting values.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "actualValue",
+          "type": "number"
+        },
+        {
+          "name": "referenceValue",
+          "type": "number"
+        }
+      ],
+      "returnType": "void"
+    },
+    "renderItems": {
+      "description": "Render previously added breakdown items.",
+      "parameters": [],
+      "returnType": "void"
+    },
+    "setItems": {
+      "description": "Set breakdown items from a manually constructed JSON string.",
+      "parameters": [
+        {
+          "name": "itemsJson",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setRows": {
+      "description": "Alias for setItems, useful when reusing Appendix Table style helpers.",
+      "parameters": [
+        {
+          "name": "rowsJson",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setDataJson": {
+      "description": "Set either single bullet data or breakdown items from a JSON string.",
+      "parameters": [
+        {
+          "name": "dataJson",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setResultSet": {
+      "description": "Set data from a manually serialized SAC result set JSON string and optional mapping JSON string.",
+      "parameters": [
+        {
+          "name": "resultSetJson",
+          "type": "string"
+        },
+        {
+          "name": "mappingJson",
           "type": "string"
         }
       ],

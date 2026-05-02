@@ -71,78 +71,66 @@
         opacity: 1;
       }
 
-
-      .breakdown-list {
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        overflow: auto;
-      }
-
-      .breakdown-item {
-        box-sizing: border-box;
-        flex: 0 0 auto;
-        min-width: 0;
-      }
-
-      .breakdown-item-inner {
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        min-width: 0;
-      }
-
-      .breakdown-item-inner.top {
-        flex-direction: column;
-      }
-
-      .breakdown-item-inner.left {
-        flex-direction: row;
-        align-items: center;
-      }
-
-      .breakdown-label {
-        box-sizing: border-box;
-        color: var(--kpb-text-color, #32363a);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
-        font-weight: var(--kpb-font-weight, normal);
-        font-style: var(--kpb-font-style, normal);
-      }
-
-      .breakdown-label.top {
-        width: 100%;
-        padding: 0 4px 2px 4px;
-      }
-
-      .breakdown-label.left {
-        width: 30%;
-        min-width: 80px;
-        max-width: 180px;
-        padding: 0 8px 0 0;
-      }
-
-      .breakdown-bullet-host {
-        box-sizing: border-box;
-        flex: 1 1 auto;
-        min-width: 0;
-        min-height: 0;
-      }
-
-      .breakdown-bullet {
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-
       .marker-hit {
         cursor: default;
         pointer-events: all;
+      }
+
+      .breakdown-scroll {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--kpb-breakdown-gap, 8px);
+      }
+
+      .breakdown-item {
+        width: 100%;
+        box-sizing: border-box;
+        flex: 0 0 auto;
+        min-height: 34px;
+      }
+
+      .breakdown-label {
+        color: var(--kpb-text-color, #32363a);
+        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
+        font-size: var(--kpb-breakdown-label-font-size, 12px);
+        font-weight: var(--kpb-breakdown-label-font-weight, 600);
+        line-height: 1.2;
+        box-sizing: border-box;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .breakdown-item.top .breakdown-label {
+        padding: 0 2px 4px 2px;
+      }
+
+      .breakdown-item.left {
+        display: grid;
+        grid-template-columns: minmax(80px, 24%) 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .breakdown-item.left .breakdown-label {
+        padding: 0 0 0 2px;
+      }
+
+      .breakdown-chart {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        min-height: 28px;
+      }
+
+      .breakdown-chart kpi-pipeline-bullet {
+        width: 100%;
+        height: 100%;
+        display: block;
       }
     </style>
     <div class="root"></div>
@@ -159,8 +147,6 @@
       this._resizeObserver = null;
       this._tooltip = null;
       this._tooltipArrow = null;
-      this._dataItems = null;
-      this._dataMeta = null;
 
       this._state = {
         actualValue: 450,
@@ -227,6 +213,10 @@
         semanticIconInMarkerLabel: false,
         showSemanticStatusInTooltip: false,
 
+        rawDecimals: 0,
+        percentDecimals: 1,
+        unit: "",
+        clampMarker: true,
 
         dimensionBreakdownEnabled: false,
         maxBreakdownItems: 50,
@@ -234,17 +224,10 @@
         breakdownItemGap: 8,
         showDimensionLabel: true,
         dimensionLabelPosition: "top",
-        dimensionLabelFontSize: 12,
-        dimensionLabelColor: "",
         dimensionId: "",
         actualMeasureId: "",
         referenceMeasureId: "",
-        resultSetFilters: [],
-
-        rawDecimals: 0,
-        percentDecimals: 1,
-        unit: "",
-        clampMarker: true
+        breakdownItems: []
       };
     }
 
@@ -301,23 +284,20 @@
         "semantic-icon-in-tooltip",
         "semantic-icon-in-marker-label",
         "show-semantic-status-in-tooltip",
-
+        "raw-decimals",
+        "percent-decimals",
+        "unit",
+        "clamp-marker",
         "dimension-breakdown-enabled",
         "max-breakdown-items",
         "breakdown-item-height",
         "breakdown-item-gap",
         "show-dimension-label",
         "dimension-label-position",
-        "dimension-label-font-size",
-        "dimension-label-color",
         "dimension-id",
         "actual-measure-id",
         "reference-measure-id",
-        "result-set-filters",
-        "raw-decimals",
-        "percent-decimals",
-        "unit",
-        "clamp-marker"
+        "breakdown-items"
       ];
     }
 
@@ -564,7 +544,6 @@
     get clampMarker() { return this._state.clampMarker; }
     set clampMarker(v) { this._set("clampMarker", v); }
 
-
     get dimensionBreakdownEnabled() { return this._state.dimensionBreakdownEnabled; }
     set dimensionBreakdownEnabled(v) { this._set("dimensionBreakdownEnabled", v); }
 
@@ -583,12 +562,6 @@
     get dimensionLabelPosition() { return this._state.dimensionLabelPosition; }
     set dimensionLabelPosition(v) { this._set("dimensionLabelPosition", v); }
 
-    get dimensionLabelFontSize() { return this._state.dimensionLabelFontSize; }
-    set dimensionLabelFontSize(v) { this._set("dimensionLabelFontSize", v); }
-
-    get dimensionLabelColor() { return this._state.dimensionLabelColor; }
-    set dimensionLabelColor(v) { this._set("dimensionLabelColor", v); }
-
     get dimensionId() { return this._state.dimensionId; }
     set dimensionId(v) { this._set("dimensionId", v); }
 
@@ -598,12 +571,126 @@
     get referenceMeasureId() { return this._state.referenceMeasureId; }
     set referenceMeasureId(v) { this._set("referenceMeasureId", v); }
 
-    get resultSetFilters() { return this._state.resultSetFilters; }
-    set resultSetFilters(v) { this._set("resultSetFilters", v); }
+    get breakdownItems() { return this._state.breakdownItems; }
+    set breakdownItems(v) { this._set("breakdownItems", v); }
+
+
+    setDimensionBreakdownEnabled(enabled) {
+      this._state.dimensionBreakdownEnabled = enabled === true || enabled === "true";
+      this.render();
+    }
+
+    setDimensionBinding(dimensionId, actualMeasureId, referenceMeasureId) {
+      this._state.dimensionId = dimensionId === undefined || dimensionId === null ? "" : String(dimensionId);
+      this._state.actualMeasureId = actualMeasureId === undefined || actualMeasureId === null ? "" : String(actualMeasureId);
+      this._state.referenceMeasureId = referenceMeasureId === undefined || referenceMeasureId === null ? "" : String(referenceMeasureId);
+      this.render();
+    }
+
+    clearItems() {
+      this._state.breakdownItems = [];
+      this.render();
+    }
+
+    addItem(id, label, actualValue, referenceValue) {
+      const item = this._normalizeBreakdownItem({
+        id,
+        label,
+        actualValue,
+        referenceValue
+      });
+
+      if (!item) return;
+
+      if (!Array.isArray(this._state.breakdownItems)) {
+        this._state.breakdownItems = [];
+      }
+
+      this._state.breakdownItems.push(item);
+      this._state.dimensionBreakdownEnabled = true;
+    }
+
+    renderItems() {
+      this._state.dimensionBreakdownEnabled = true;
+      this.render();
+    }
+
+    setItems(itemsJson) {
+      try {
+        const payload = typeof itemsJson === "string" ? JSON.parse(itemsJson) : itemsJson;
+        const sourceItems = Array.isArray(payload)
+          ? payload
+          : (payload && Array.isArray(payload.items) ? payload.items : []);
+
+        const items = [];
+        sourceItems.forEach((sourceItem) => {
+          const item = this._normalizeBreakdownItem(sourceItem);
+          if (item) items.push(item);
+        });
+
+        this._state.breakdownItems = items;
+        this._state.dimensionBreakdownEnabled = items.length > 0 ? true : this._state.dimensionBreakdownEnabled;
+        this.render();
+      } catch (e) {
+        console.error("Invalid items JSON", e);
+        if (this._root) {
+          this._root.innerHTML = '<div class="error">Invalid items JSON.</div>';
+        }
+      }
+    }
+
+    setRows(rowsJson) {
+      this.setItems(rowsJson);
+    }
+
+    setDataJson(dataJson) {
+      try {
+        const payload = typeof dataJson === "string" ? JSON.parse(dataJson) : dataJson;
+
+        if (payload && Array.isArray(payload.items)) {
+          this.setItems(payload.items);
+          return;
+        }
+
+        if (payload && (payload.actualValue !== undefined || payload.actual !== undefined) && (payload.referenceValue !== undefined || payload.reference !== undefined)) {
+          this.setData(
+            payload.actualValue !== undefined ? payload.actualValue : payload.actual,
+            payload.referenceValue !== undefined ? payload.referenceValue : payload.reference
+          );
+          return;
+        }
+
+        throw new Error("Unsupported data JSON shape.");
+      } catch (e) {
+        console.error("Invalid data JSON", e);
+        if (this._root) {
+          this._root.innerHTML = '<div class="error">Invalid data JSON.</div>';
+        }
+      }
+    }
+
+    setResultSet(resultSetJson, mappingJson) {
+      try {
+        const resultSet = typeof resultSetJson === "string" ? JSON.parse(resultSetJson) : resultSetJson;
+        const mapping = mappingJson
+          ? (typeof mappingJson === "string" ? JSON.parse(mappingJson) : mappingJson)
+          : {};
+
+        const items = this._itemsFromResultSet(resultSet, mapping || {});
+        this._state.breakdownItems = items;
+        this._state.dimensionBreakdownEnabled = mapping.dimensionBreakdownEnabled !== undefined
+          ? (mapping.dimensionBreakdownEnabled === true || mapping.dimensionBreakdownEnabled === "true")
+          : items.length > 0;
+        this.render();
+      } catch (e) {
+        console.error("Invalid result set JSON", e);
+        if (this._root) {
+          this._root.innerHTML = '<div class="error">Invalid result set JSON.</div>';
+        }
+      }
+    }
 
     setData(actualValue, referenceValue) {
-      this._dataItems = null;
-      this._dataMeta = null;
       this._state.actualValue = Number(actualValue);
       this._state.referenceValue = Number(referenceValue);
       this.render();
@@ -651,524 +738,6 @@
           this._root.innerHTML = '<div class="error">Invalid config JSON.</div>';
         }
       }
-    }
-
-
-
-    _parseJsonInput(input, fallback) {
-      if (input === null || input === undefined || input === "") {
-        return fallback;
-      }
-
-      if (typeof input === "string") {
-        try {
-          return JSON.parse(input);
-        } catch (e) {
-          console.error("Invalid JSON input", e);
-          return fallback;
-        }
-      }
-
-      return input;
-    }
-
-    setDimensionBreakdownEnabled(enabled) {
-      this._state.dimensionBreakdownEnabled = enabled === true || enabled === "true";
-      this.render();
-    }
-
-    setDimensionBinding(dimensionId, actualMeasureId, referenceMeasureId) {
-      this._state.dimensionId = dimensionId === undefined || dimensionId === null ? "" : String(dimensionId);
-      this._state.actualMeasureId = actualMeasureId === undefined || actualMeasureId === null ? "" : String(actualMeasureId);
-      this._state.referenceMeasureId = referenceMeasureId === undefined || referenceMeasureId === null ? "" : String(referenceMeasureId);
-      this.render();
-    }
-
-    setDataJson(dataJson) {
-      const payload = this._parseJsonInput(dataJson, null);
-
-      if (!payload) {
-        this._root.innerHTML = '<div class="error">Invalid data JSON.</div>';
-        return;
-      }
-
-      if (!Array.isArray(payload) && (payload.actualValue !== undefined || payload.actual !== undefined) && (payload.referenceValue !== undefined || payload.reference !== undefined)) {
-        this._dataItems = null;
-        this._dataMeta = null;
-        this._state.dimensionBreakdownEnabled = payload.dimensionBreakdownEnabled === true;
-        this._state.actualValue = this._toNumber(payload.actualValue !== undefined ? payload.actualValue : payload.actual);
-        this._state.referenceValue = this._toNumber(payload.referenceValue !== undefined ? payload.referenceValue : payload.reference);
-        this.render();
-        return;
-      }
-
-      const mapping = Array.isArray(payload)
-        ? {}
-        : {
-            dimensionId: payload.dimensionId || payload.dimension || this._state.dimensionId,
-            actualMeasureId: payload.actualMeasureId || payload.actualMeasure || this._state.actualMeasureId,
-            referenceMeasureId: payload.referenceMeasureId || payload.referenceMeasure || this._state.referenceMeasureId,
-            filters: payload.filters || payload.resultSetFilters || this._state.resultSetFilters
-          };
-
-      const normalized = Array.isArray(payload)
-        ? this._normalizeResultSet(payload, mapping)
-        : (Array.isArray(payload.items)
-            ? this._normalizeItems(payload.items, mapping)
-            : this._normalizeResultSet(payload.rows || payload.data || [], mapping));
-
-      if (!normalized.items.length) {
-        this._root.innerHTML = '<div class="error">No valid data in data JSON.</div>';
-        return;
-      }
-
-      this._dataItems = normalized.items;
-      this._dataMeta = normalized.meta;
-
-      if (!Array.isArray(payload) && payload.dimensionBreakdownEnabled !== undefined) {
-        this._state.dimensionBreakdownEnabled = payload.dimensionBreakdownEnabled === true || payload.dimensionBreakdownEnabled === "true";
-      } else {
-        this._state.dimensionBreakdownEnabled = true;
-      }
-
-      this.render();
-    }
-
-    setResultSet(resultSetJson, mappingJson) {
-      const resultSet = this._parseJsonInput(resultSetJson, null);
-      const mapping = this._parseJsonInput(mappingJson, {}) || {};
-
-      if (!Array.isArray(resultSet)) {
-        this._root.innerHTML = '<div class="error">Invalid result set JSON: expected array.</div>';
-        return;
-      }
-
-      Object.keys(mapping).forEach((key) => {
-        if (Object.prototype.hasOwnProperty.call(this._state, key)) {
-          this._state[key] = this._parseValue(key, mapping[key]);
-        }
-      });
-
-      const normalized = this._normalizeResultSet(resultSet, {
-        dimensionId: mapping.dimensionId || this._state.dimensionId,
-        actualMeasureId: mapping.actualMeasureId || this._state.actualMeasureId,
-        referenceMeasureId: mapping.referenceMeasureId || this._state.referenceMeasureId,
-        filters: mapping.filters || mapping.resultSetFilters || this._state.resultSetFilters
-      });
-
-      if (!normalized.items.length) {
-        this._root.innerHTML = '<div class="error">No valid data in result set.</div>';
-        return;
-      }
-
-      this._dataItems = normalized.items;
-      this._dataMeta = normalized.meta;
-
-      if (mapping.dimensionBreakdownEnabled !== undefined) {
-        this._state.dimensionBreakdownEnabled = mapping.dimensionBreakdownEnabled === true || mapping.dimensionBreakdownEnabled === "true";
-      } else {
-        this._state.dimensionBreakdownEnabled = true;
-      }
-
-      this.render();
-    }
-
-    _normalizeItems(items, mapping) {
-      const normalizedItems = [];
-
-      items.forEach((item, index) => {
-        if (!item || typeof item !== "object") return;
-
-        const actualKey = mapping.actualMeasureId || "actualValue";
-        const referenceKey = mapping.referenceMeasureId || "referenceValue";
-
-        const actual = this._toNumber(
-          item.actualValue !== undefined ? item.actualValue :
-          item.actual !== undefined ? item.actual :
-          item[actualKey]
-        );
-        const reference = this._toNumber(
-          item.referenceValue !== undefined ? item.referenceValue :
-          item.reference !== undefined ? item.reference :
-          item[referenceKey]
-        );
-
-        if (!Number.isFinite(actual) || !Number.isFinite(reference)) return;
-
-        const id = item.id !== undefined ? String(item.id) : String(index + 1);
-        const label = item.label !== undefined
-          ? String(item.label)
-          : item.description !== undefined
-            ? String(item.description)
-            : id;
-
-        normalizedItems.push({
-          id,
-          label,
-          actualValue: actual,
-          referenceValue: reference
-        });
-      });
-
-      return {
-        items: normalizedItems,
-        meta: {
-          dimensionId: mapping.dimensionId || "",
-          actualMeasureId: mapping.actualMeasureId || "actualValue",
-          referenceMeasureId: mapping.referenceMeasureId || "referenceValue"
-        }
-      };
-    }
-
-    _normalizeResultSet(rows, mapping) {
-      const filteredRows = rows.filter((row) => this._matchesResultSetFilters(row, mapping.filters || []));
-      if (!filteredRows.length) {
-        return { items: [], meta: {} };
-      }
-
-      const dimensionId = mapping.dimensionId || this._state.dimensionId || this._discoverFirstDimensionId(filteredRows);
-      if (!dimensionId) {
-        return { items: [], meta: {} };
-      }
-
-      const hasMeasureDimension = filteredRows.some((row) => row && row["@MeasureDimension"]);
-      const measureKeys = this._discoverMeasureKeys(filteredRows, dimensionId);
-
-      if (hasMeasureDimension && measureKeys.length < 2) {
-        return this._normalizeLongResultSet(filteredRows, mapping, dimensionId);
-      }
-
-      return this._normalizeWideResultSet(filteredRows, mapping, dimensionId, measureKeys);
-    }
-
-    _normalizeWideResultSet(rows, mapping, dimensionId, discoveredMeasureKeys) {
-      const measureKeys = discoveredMeasureKeys.length ? discoveredMeasureKeys : this._discoverMeasureKeys(rows, dimensionId);
-      const actualMeasureId = mapping.actualMeasureId || this._state.actualMeasureId || measureKeys[0] || "";
-      const referenceMeasureId = mapping.referenceMeasureId || this._state.referenceMeasureId || measureKeys[1] || "";
-
-      if (!actualMeasureId || !referenceMeasureId) {
-        return { items: [], meta: { dimensionId, actualMeasureId, referenceMeasureId } };
-      }
-
-      const groups = new Map();
-
-      rows.forEach((row) => {
-        const member = this._getMember(row, dimensionId);
-        const actual = this._toNumber(this._getCell(row, actualMeasureId));
-        const reference = this._toNumber(this._getCell(row, referenceMeasureId));
-
-        if (!member || !Number.isFinite(actual) || !Number.isFinite(reference)) return;
-
-        if (!groups.has(member.id)) {
-          groups.set(member.id, {
-            id: member.id,
-            label: member.label,
-            actualValue: 0,
-            referenceValue: 0
-          });
-        }
-
-        const target = groups.get(member.id);
-        target.actualValue += actual;
-        target.referenceValue += reference;
-      });
-
-      return {
-        items: Array.from(groups.values()),
-        meta: { dimensionId, actualMeasureId, referenceMeasureId }
-      };
-    }
-
-    _normalizeLongResultSet(rows, mapping, dimensionId) {
-      const measureMembers = [];
-      const seenMeasures = new Set();
-
-      rows.forEach((row) => {
-        const measure = this._getMember(row, "@MeasureDimension");
-        if (measure && !seenMeasures.has(measure.id)) {
-          seenMeasures.add(measure.id);
-          measureMembers.push(measure.id);
-        }
-      });
-
-      const actualMeasureId = mapping.actualMeasureId || this._state.actualMeasureId || measureMembers[0] || "";
-      const referenceMeasureId = mapping.referenceMeasureId || this._state.referenceMeasureId || measureMembers[1] || "";
-
-      if (!actualMeasureId || !referenceMeasureId) {
-        return { items: [], meta: { dimensionId, actualMeasureId, referenceMeasureId } };
-      }
-
-      const groups = new Map();
-
-      rows.forEach((row) => {
-        const member = this._getMember(row, dimensionId);
-        const measure = this._getMember(row, "@MeasureDimension");
-        if (!member || !measure) return;
-
-        const value = this._extractLongMeasureValue(row, actualMeasureId, referenceMeasureId);
-        if (!Number.isFinite(value)) return;
-
-        if (!groups.has(member.id)) {
-          groups.set(member.id, {
-            id: member.id,
-            label: member.label,
-            actualValue: 0,
-            referenceValue: 0,
-            _hasActual: false,
-            _hasReference: false
-          });
-        }
-
-        const target = groups.get(member.id);
-
-        if (measure.id === actualMeasureId || measure.label === actualMeasureId) {
-          target.actualValue += value;
-          target._hasActual = true;
-        }
-
-        if (measure.id === referenceMeasureId || measure.label === referenceMeasureId) {
-          target.referenceValue += value;
-          target._hasReference = true;
-        }
-      });
-
-      const items = Array.from(groups.values())
-        .filter((item) => item._hasActual && item._hasReference)
-        .map((item) => ({
-          id: item.id,
-          label: item.label,
-          actualValue: item.actualValue,
-          referenceValue: item.referenceValue
-        }));
-
-      return {
-        items,
-        meta: { dimensionId, actualMeasureId, referenceMeasureId }
-      };
-    }
-
-    _discoverFirstDimensionId(rows) {
-      for (let r = 0; r < rows.length; r += 1) {
-        const row = rows[r];
-        if (!row || typeof row !== "object") continue;
-
-        const keys = Object.keys(row);
-        for (let i = 0; i < keys.length; i += 1) {
-          const key = keys[i];
-          if (key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") continue;
-
-          const cell = row[key];
-
-          if (this._isDimensionCell(cell)) {
-            return key;
-          }
-        }
-
-        for (let i = 0; i < keys.length; i += 1) {
-          const key = keys[i];
-          if (key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") continue;
-
-          const cell = row[key];
-          if (!this._isMeasureCell(cell) && !Number.isFinite(this._toNumber(cell))) {
-            return key;
-          }
-        }
-      }
-
-      return "";
-    }
-
-    _discoverMeasureKeys(rows, dimensionId) {
-      const keys = [];
-      const seen = new Set();
-
-      rows.forEach((row) => {
-        if (!row || typeof row !== "object") return;
-
-        Object.keys(row).forEach((key) => {
-          if (seen.has(key)) return;
-          if (key === dimensionId || key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") return;
-
-          const cell = row[key];
-
-          if (this._isMeasureCell(cell) || Number.isFinite(this._toNumber(cell))) {
-            seen.add(key);
-            keys.push(key);
-          }
-        });
-      });
-
-      return keys;
-    }
-
-    _matchesResultSetFilters(row, filters) {
-      if (!Array.isArray(filters) || !filters.length) return true;
-
-      return filters.every((filter) => {
-        if (!filter || !filter.dimensionId) return true;
-
-        const allowed = Array.isArray(filter.members)
-          ? filter.members.map((member) => String(member))
-          : filter.member !== undefined
-            ? [String(filter.member)]
-            : [];
-
-        if (!allowed.length) return true;
-
-        const member = this._getMember(row, filter.dimensionId);
-        if (!member) return false;
-
-        return allowed.includes(member.id) || allowed.includes(member.label);
-      });
-    }
-
-    _getCell(row, key) {
-      if (!row || !key) return undefined;
-      return row[key];
-    }
-
-    _getMember(row, key) {
-      if (!row || !key || row[key] === undefined || row[key] === null) return null;
-
-      const cell = row[key];
-
-      if (typeof cell === "object") {
-        const id = cell.id !== undefined
-          ? String(cell.id)
-          : cell.key !== undefined
-            ? String(cell.key)
-            : cell.rawValue !== undefined
-              ? String(cell.rawValue)
-              : cell.value !== undefined
-                ? String(cell.value)
-                : "";
-
-        const label = cell.description !== undefined
-          ? String(cell.description)
-          : cell.label !== undefined
-            ? String(cell.label)
-            : cell.formattedValue !== undefined
-              ? String(cell.formattedValue)
-              : id;
-
-        return id ? { id, label: label || id } : null;
-      }
-
-      return {
-        id: String(cell),
-        label: String(cell)
-      };
-    }
-
-    _isDimensionCell(cell) {
-      return Boolean(
-        cell &&
-        typeof cell === "object" &&
-        !this._isMeasureCell(cell) &&
-        (cell.id !== undefined || cell.description !== undefined || cell.label !== undefined || cell.key !== undefined)
-      );
-    }
-
-    _isMeasureCell(cell) {
-      return Boolean(
-        cell &&
-        typeof cell === "object" &&
-        (cell.rawValue !== undefined || cell.formattedValue !== undefined || cell.value !== undefined) &&
-        !(cell.id !== undefined && cell.description !== undefined && cell.rawValue === undefined)
-      );
-    }
-
-    _extractLongMeasureValue(row, actualMeasureId, referenceMeasureId) {
-      if (row.rawValue !== undefined) return this._toNumber(row.rawValue);
-      if (row.value !== undefined) return this._toNumber(row.value);
-
-      if (row[actualMeasureId] !== undefined) return this._toNumber(row[actualMeasureId]);
-      if (row[referenceMeasureId] !== undefined) return this._toNumber(row[referenceMeasureId]);
-
-      const keys = Object.keys(row || {});
-      for (let i = 0; i < keys.length; i += 1) {
-        const key = keys[i];
-        if (key === "@MeasureDimension") continue;
-
-        const cell = row[key];
-        if (this._isMeasureCell(cell)) {
-          const n = this._toNumber(cell);
-          if (Number.isFinite(n)) return n;
-        }
-      }
-
-      return NaN;
-    }
-
-    _toNumber(value) {
-      if (value && typeof value === "object") {
-        if (value.rawValue !== undefined) return this._toNumber(value.rawValue);
-        if (value.value !== undefined) return this._toNumber(value.value);
-        if (value.formattedValue !== undefined) return this._toNumber(value.formattedValue);
-      }
-
-      if (typeof value === "number") return value;
-
-      if (typeof value === "string") {
-        const normalized = value
-          .replace(/\s/g, "")
-          .replace(/%$/g, "")
-          .replace(/,/g, ".");
-
-        const n = Number(normalized);
-        return Number.isFinite(n) ? n : NaN;
-      }
-
-      const n = Number(value);
-      return Number.isFinite(n) ? n : NaN;
-    }
-
-    _renderBreakdown() {
-      const s = this._state;
-      const maxItems = Math.max(1, Math.floor(Number(s.maxBreakdownItems) || 50));
-      const items = (Array.isArray(this._dataItems) ? this._dataItems : []).slice(0, maxItems);
-      const itemHeight = Math.max(42, Number(s.breakdownItemHeight) || 78);
-      const gap = Math.max(0, Number(s.breakdownItemGap) || 0);
-      const labelPosition = String(s.dimensionLabelPosition || "top").toLowerCase() === "left" ? "left" : "top";
-      const labelFontSize = Math.max(8, Number(s.dimensionLabelFontSize || s.fontSize || 12));
-      const labelColor = s.dimensionLabelColor || s.textColor;
-
-      if (!items.length) {
-        this._root.innerHTML = '<div class="error">No breakdown data.</div>';
-        return;
-      }
-
-      this._root.innerHTML = `
-        <div class="breakdown-list">
-          ${items.map((item, index) => `
-            <div class="breakdown-item" style="height:${itemHeight}px;margin-bottom:${index === items.length - 1 ? 0 : gap}px;">
-              <div class="breakdown-item-inner ${labelPosition}">
-                ${s.showDimensionLabel ? `
-                  <div class="breakdown-label ${labelPosition}"
-                       title="${this._escapeHtml(item.label)}"
-                       style="font-size:${labelFontSize}px;color:${this._escapeHtml(labelColor)};">
-                    ${this._escapeHtml(item.label)}
-                  </div>
-                ` : ""}
-                <div class="breakdown-bullet-host">
-                  <kpi-pipeline-bullet class="breakdown-bullet" data-kpb-child="true"></kpi-pipeline-bullet>
-                </div>
-              </div>
-            </div>
-          `).join("")}
-        </div>
-      `;
-
-      const childConfig = Object.assign({}, s, {
-        dimensionBreakdownEnabled: false
-      });
-
-      const children = this.shadowRoot.querySelectorAll('kpi-pipeline-bullet[data-kpb-child="true"]');
-      children.forEach((child, index) => {
-        const item = items[index];
-        child.setConfig(childConfig);
-        child.setData(item.actualValue, item.referenceValue);
-      });
     }
 
 
@@ -1443,6 +1012,236 @@
       this._tooltipArrow = null;
     }
 
+
+    _parseNumberLike(value) {
+      if (value === null || value === undefined || value === "") return NaN;
+      if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+
+      let text = String(value).trim();
+      if (!text) return NaN;
+
+      text = text.replace(/\s/g, "");
+
+      const hasComma = text.indexOf(",") >= 0;
+      const hasDot = text.indexOf(".") >= 0;
+
+      if (hasComma && !hasDot) {
+        text = text.replace(",", ".");
+      } else if (hasComma && hasDot) {
+        text = text.replace(/,/g, "");
+      }
+
+      text = text.replace(/[^0-9+\-.eE]/g, "");
+
+      const n = Number(text);
+      return Number.isFinite(n) ? n : NaN;
+    }
+
+    _normalizeBreakdownItem(sourceItem) {
+      if (!sourceItem || typeof sourceItem !== "object") return null;
+
+      const actual = this._parseNumberLike(
+        sourceItem.actualValue !== undefined ? sourceItem.actualValue :
+        sourceItem.actual !== undefined ? sourceItem.actual :
+        sourceItem.value !== undefined ? sourceItem.value :
+        sourceItem.measure1
+      );
+
+      const reference = this._parseNumberLike(
+        sourceItem.referenceValue !== undefined ? sourceItem.referenceValue :
+        sourceItem.reference !== undefined ? sourceItem.reference :
+        sourceItem.target !== undefined ? sourceItem.target :
+        sourceItem.measure2
+      );
+
+      if (!Number.isFinite(actual) || !Number.isFinite(reference)) return null;
+
+      const id = sourceItem.id !== undefined && sourceItem.id !== null
+        ? String(sourceItem.id)
+        : (sourceItem.key !== undefined && sourceItem.key !== null ? String(sourceItem.key) : String(sourceItem.label || ""));
+
+      const label = sourceItem.label !== undefined && sourceItem.label !== null
+        ? String(sourceItem.label)
+        : (sourceItem.description !== undefined && sourceItem.description !== null ? String(sourceItem.description) : id);
+
+      return {
+        id,
+        label,
+        actualValue: actual,
+        referenceValue: reference
+      };
+    }
+
+    _getCellId(cell) {
+      if (cell === null || cell === undefined) return "";
+      if (typeof cell !== "object") return String(cell);
+      if (cell.id !== undefined && cell.id !== null) return String(cell.id);
+      if (cell.memberId !== undefined && cell.memberId !== null) return String(cell.memberId);
+      if (cell.description !== undefined && cell.description !== null) return String(cell.description);
+      if (cell.formattedValue !== undefined && cell.formattedValue !== null) return String(cell.formattedValue);
+      return "";
+    }
+
+    _getCellLabel(cell) {
+      if (cell === null || cell === undefined) return "";
+      if (typeof cell !== "object") return String(cell);
+      if (cell.description !== undefined && cell.description !== null) return String(cell.description);
+      if (cell.formattedValue !== undefined && cell.formattedValue !== null) return String(cell.formattedValue);
+      if (cell.id !== undefined && cell.id !== null) return String(cell.id);
+      if (cell.memberId !== undefined && cell.memberId !== null) return String(cell.memberId);
+      return "";
+    }
+
+    _getCellRawValue(cell) {
+      if (cell === null || cell === undefined) return NaN;
+      if (typeof cell !== "object") return this._parseNumberLike(cell);
+      if (cell.rawValue !== undefined && cell.rawValue !== null) return this._parseNumberLike(cell.rawValue);
+      if (cell.value !== undefined && cell.value !== null) return this._parseNumberLike(cell.value);
+      if (cell.formattedValue !== undefined && cell.formattedValue !== null) return this._parseNumberLike(cell.formattedValue);
+      return NaN;
+    }
+
+    _itemsFromResultSet(resultSet, mapping) {
+      if (!Array.isArray(resultSet) || resultSet.length === 0) return [];
+
+      if (resultSet[0] && (resultSet[0].actualValue !== undefined || resultSet[0].actual !== undefined)) {
+        const normalized = [];
+        resultSet.forEach((row) => {
+          const item = this._normalizeBreakdownItem(row);
+          if (item) normalized.push(item);
+        });
+        return normalized;
+      }
+
+      const firstRow = resultSet[0] || {};
+      const dimensionKeys = Object.keys(firstRow).filter((key) => key !== "@MeasureDimension" && key.charAt(0) !== "@");
+      const dimensionKey = mapping.dimensionId || this._state.dimensionId || dimensionKeys[0] || "";
+
+      if (!dimensionKey) return [];
+
+      const measureOrder = [];
+      resultSet.forEach((row) => {
+        const measureCell = row["@MeasureDimension"];
+        const measureId = this._getCellId(measureCell);
+        if (measureId && measureOrder.indexOf(measureId) === -1) {
+          measureOrder.push(measureId);
+        }
+      });
+
+      const actualMeasureId = mapping.actualMeasureId || this._state.actualMeasureId || measureOrder[0] || "";
+      const referenceMeasureId = mapping.referenceMeasureId || this._state.referenceMeasureId || measureOrder[1] || "";
+
+      if (!actualMeasureId || !referenceMeasureId) return [];
+
+      const grouped = {};
+
+      resultSet.forEach((row) => {
+        const dimCell = row[dimensionKey];
+        const dimId = this._getCellId(dimCell);
+        const dimLabel = this._getCellLabel(dimCell) || dimId;
+        const measureId = this._getCellId(row["@MeasureDimension"]);
+        const value = this._getCellRawValue(row["@MeasureDimension"]);
+
+        if (!dimId || !Number.isFinite(value)) return;
+
+        if (!grouped[dimId]) {
+          grouped[dimId] = {
+            id: dimId,
+            label: dimLabel,
+            actualValue: NaN,
+            referenceValue: NaN
+          };
+        }
+
+        if (measureId === actualMeasureId) {
+          grouped[dimId].actualValue = value;
+        }
+
+        if (measureId === referenceMeasureId) {
+          grouped[dimId].referenceValue = value;
+        }
+      });
+
+      return Object.keys(grouped)
+        .map((key) => grouped[key])
+        .filter((item) => Number.isFinite(item.actualValue) && Number.isFinite(item.referenceValue));
+    }
+
+    _getChildConfig() {
+      const cfg = {};
+
+      Object.keys(this._state).forEach((key) => {
+        if (key === "breakdownItems" || key === "dimensionBreakdownEnabled") return;
+        cfg[key] = this._state[key];
+      });
+
+      cfg.dimensionBreakdownEnabled = false;
+      cfg.showDimensionLabel = false;
+
+      if (!this._state.showAxisLabels) {
+        cfg.paddingTop = Math.min(Number(cfg.paddingTop) || 0, 8);
+        cfg.paddingBottom = Math.min(Number(cfg.paddingBottom) || 0, 10);
+      }
+
+      return cfg;
+    }
+
+    _renderBreakdown() {
+      const s = this._state;
+      const sourceItems = Array.isArray(s.breakdownItems) ? s.breakdownItems : [];
+      const maxItems = Math.max(0, Number(s.maxBreakdownItems) || sourceItems.length);
+      const items = sourceItems.slice(0, maxItems);
+
+      if (!items.length) {
+        this._root.innerHTML = '<div class="error">No breakdown items.</div>';
+        return;
+      }
+
+      const itemHeight = Math.max(34, Number(s.breakdownItemHeight) || 78);
+      const gap = Math.max(0, Number(s.breakdownItemGap) || 0);
+      const labelPosition = String(s.dimensionLabelPosition || "top").toLowerCase() === "left" ? "left" : "top";
+      const showLabel = Boolean(s.showDimensionLabel);
+      const labelFontSize = Math.max(8, Number(s.fontSize) || 12);
+
+      this._root.style.setProperty("--kpb-breakdown-gap", `${gap}px`);
+      this._root.style.setProperty("--kpb-breakdown-label-font-size", `${labelFontSize}px`);
+      this._root.style.setProperty("--kpb-breakdown-label-font-weight", s.fontWeight || "600");
+
+      this._root.innerHTML = '<div class="breakdown-scroll"></div>';
+
+      const container = this._root.querySelector(".breakdown-scroll");
+      const childConfig = this._getChildConfig();
+
+      items.forEach((item) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = `breakdown-item ${labelPosition}`;
+        wrapper.style.height = `${itemHeight}px`;
+
+        if (showLabel) {
+          const label = document.createElement("div");
+          label.className = "breakdown-label";
+          label.title = item.label;
+          label.textContent = item.label;
+          wrapper.appendChild(label);
+        }
+
+        const chartHost = document.createElement("div");
+        chartHost.className = "breakdown-chart";
+
+        if (labelPosition === "top" && showLabel) {
+          chartHost.style.height = `${Math.max(28, itemHeight - labelFontSize - 8)}px`;
+        }
+
+        const child = document.createElement("kpi-pipeline-bullet");
+        chartHost.appendChild(child);
+        wrapper.appendChild(chartHost);
+        container.appendChild(wrapper);
+
+        child.setConfig(childConfig);
+        child.setData(item.actualValue, item.referenceValue);
+      });
+    }
+
     _attachTooltipHandlers(actual, ref, varianceRaw, variancePct, semanticRule) {
       const marker = this.shadowRoot.querySelector(".marker-hit");
 
@@ -1497,7 +1296,7 @@
       this._root.style.setProperty("--kpb-font-style", s.fontStyle);
       this._root.style.setProperty("--kpb-text-color", s.textColor);
 
-      if (s.dimensionBreakdownEnabled && Array.isArray(this._dataItems) && this._dataItems.length > 0) {
+      if (s.dimensionBreakdownEnabled && Array.isArray(s.breakdownItems) && s.breakdownItems.length > 0) {
         this._renderBreakdown();
         return;
       }
