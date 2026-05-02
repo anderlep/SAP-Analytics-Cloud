@@ -72,57 +72,69 @@
       }
 
 
-      .kpb-list {
+      .breakdown-list {
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
         overflow: auto;
       }
 
-      .kpb-item {
+      .breakdown-item {
+        box-sizing: border-box;
+        flex: 0 0 auto;
+        min-width: 0;
+      }
+
+      .breakdown-item-inner {
+        box-sizing: border-box;
         width: 100%;
-        box-sizing: border-box;
+        height: 100%;
         display: flex;
+        min-width: 0;
+      }
+
+      .breakdown-item-inner.top {
         flex-direction: column;
-        min-height: 42px;
       }
 
-      .kpb-item.kpb-label-left {
+      .breakdown-item-inner.left {
         flex-direction: row;
-        align-items: stretch;
-      }
-
-      .kpb-title {
-        box-sizing: border-box;
-        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
-        font-weight: var(--kpb-font-weight, normal);
-        font-style: var(--kpb-font-style, normal);
-        color: var(--kpb-text-color, #32363a);
-        font-size: var(--kpb-breakdown-label-font-size, 12px);
-        line-height: 1.25;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .kpb-item.kpb-label-top .kpb-title {
-        padding: 0 2px 4px 2px;
-      }
-
-      .kpb-item.kpb-label-left .kpb-title {
-        flex: 0 0 var(--kpb-breakdown-label-width, 120px);
-        padding: 0 8px 0 2px;
-        display: flex;
         align-items: center;
       }
 
-      .kpb-chart {
-        width: 100%;
-        min-width: 0;
-        flex: 1 1 auto;
+      .breakdown-label {
+        box-sizing: border-box;
+        color: var(--kpb-text-color, #32363a);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: var(--kpb-font-family, "72", Arial, Helvetica, sans-serif);
+        font-weight: var(--kpb-font-weight, normal);
+        font-style: var(--kpb-font-style, normal);
       }
 
-      .kpb-chart kpi-pipeline-bullet {
+      .breakdown-label.top {
+        width: 100%;
+        padding: 0 4px 2px 4px;
+      }
+
+      .breakdown-label.left {
+        width: 30%;
+        min-width: 80px;
+        max-width: 180px;
+        padding: 0 8px 0 0;
+      }
+
+      .breakdown-bullet-host {
+        box-sizing: border-box;
+        flex: 1 1 auto;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      .breakdown-bullet {
         display: block;
         width: 100%;
         height: 100%;
@@ -147,6 +159,8 @@
       this._resizeObserver = null;
       this._tooltip = null;
       this._tooltipArrow = null;
+      this._dataItems = null;
+      this._dataMeta = null;
 
       this._state = {
         actualValue: 450,
@@ -213,18 +227,19 @@
         semanticIconInMarkerLabel: false,
         showSemanticStatusInTooltip: false,
 
-        dimensionBreakdownEnabled: true,
-        dimensionId: "",
-        actualMeasureId: "",
-        referenceMeasureId: "",
-        dataRows: [],
+
+        dimensionBreakdownEnabled: false,
         maxBreakdownItems: 50,
         breakdownItemHeight: 78,
         breakdownItemGap: 8,
         showDimensionLabel: true,
         dimensionLabelPosition: "top",
-        dimensionLabelWidth: 120,
-        emptyDataText: "No data available.",
+        dimensionLabelFontSize: 12,
+        dimensionLabelColor: "",
+        dimensionId: "",
+        actualMeasureId: "",
+        referenceMeasureId: "",
+        resultSetFilters: [],
 
         rawDecimals: 0,
         percentDecimals: 1,
@@ -286,18 +301,19 @@
         "semantic-icon-in-tooltip",
         "semantic-icon-in-marker-label",
         "show-semantic-status-in-tooltip",
+
         "dimension-breakdown-enabled",
-        "dimension-id",
-        "actual-measure-id",
-        "reference-measure-id",
-        "data-rows",
         "max-breakdown-items",
         "breakdown-item-height",
         "breakdown-item-gap",
         "show-dimension-label",
         "dimension-label-position",
-        "dimension-label-width",
-        "empty-data-text",
+        "dimension-label-font-size",
+        "dimension-label-color",
+        "dimension-id",
+        "actual-measure-id",
+        "reference-measure-id",
+        "result-set-filters",
         "raw-decimals",
         "percent-decimals",
         "unit",
@@ -320,14 +336,6 @@
       }
 
       this._removeTooltip();
-    }
-
-    onCustomWidgetAfterUpdate() {
-      this.render();
-    }
-
-    onCustomWidgetResize() {
-      this.render();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -556,20 +564,9 @@
     get clampMarker() { return this._state.clampMarker; }
     set clampMarker(v) { this._set("clampMarker", v); }
 
+
     get dimensionBreakdownEnabled() { return this._state.dimensionBreakdownEnabled; }
     set dimensionBreakdownEnabled(v) { this._set("dimensionBreakdownEnabled", v); }
-
-    get dimensionId() { return this._state.dimensionId; }
-    set dimensionId(v) { this._set("dimensionId", v); }
-
-    get actualMeasureId() { return this._state.actualMeasureId; }
-    set actualMeasureId(v) { this._set("actualMeasureId", v); }
-
-    get referenceMeasureId() { return this._state.referenceMeasureId; }
-    set referenceMeasureId(v) { this._set("referenceMeasureId", v); }
-
-    get dataRows() { return this._state.dataRows; }
-    set dataRows(v) { this._set("dataRows", v); }
 
     get maxBreakdownItems() { return this._state.maxBreakdownItems; }
     set maxBreakdownItems(v) { this._set("maxBreakdownItems", v); }
@@ -586,13 +583,27 @@
     get dimensionLabelPosition() { return this._state.dimensionLabelPosition; }
     set dimensionLabelPosition(v) { this._set("dimensionLabelPosition", v); }
 
-    get dimensionLabelWidth() { return this._state.dimensionLabelWidth; }
-    set dimensionLabelWidth(v) { this._set("dimensionLabelWidth", v); }
+    get dimensionLabelFontSize() { return this._state.dimensionLabelFontSize; }
+    set dimensionLabelFontSize(v) { this._set("dimensionLabelFontSize", v); }
 
-    get emptyDataText() { return this._state.emptyDataText; }
-    set emptyDataText(v) { this._set("emptyDataText", v); }
+    get dimensionLabelColor() { return this._state.dimensionLabelColor; }
+    set dimensionLabelColor(v) { this._set("dimensionLabelColor", v); }
+
+    get dimensionId() { return this._state.dimensionId; }
+    set dimensionId(v) { this._set("dimensionId", v); }
+
+    get actualMeasureId() { return this._state.actualMeasureId; }
+    set actualMeasureId(v) { this._set("actualMeasureId", v); }
+
+    get referenceMeasureId() { return this._state.referenceMeasureId; }
+    set referenceMeasureId(v) { this._set("referenceMeasureId", v); }
+
+    get resultSetFilters() { return this._state.resultSetFilters; }
+    set resultSetFilters(v) { this._set("resultSetFilters", v); }
 
     setData(actualValue, referenceValue) {
+      this._dataItems = null;
+      this._dataMeta = null;
       this._state.actualValue = Number(actualValue);
       this._state.referenceValue = Number(referenceValue);
       this.render();
@@ -643,8 +654,26 @@
     }
 
 
-    setDataRows(dataRows) {
-      this._state.dataRows = this._parseValue("dataRows", dataRows);
+
+    _parseJsonInput(input, fallback) {
+      if (input === null || input === undefined || input === "") {
+        return fallback;
+      }
+
+      if (typeof input === "string") {
+        try {
+          return JSON.parse(input);
+        } catch (e) {
+          console.error("Invalid JSON input", e);
+          return fallback;
+        }
+      }
+
+      return input;
+    }
+
+    setDimensionBreakdownEnabled(enabled) {
+      this._state.dimensionBreakdownEnabled = enabled === true || enabled === "true";
       this.render();
     }
 
@@ -655,320 +684,493 @@
       this.render();
     }
 
-    setDimensionBreakdownEnabled(enabled) {
-      this._state.dimensionBreakdownEnabled = this._parseValue("dimensionBreakdownEnabled", enabled);
+    setDataJson(dataJson) {
+      const payload = this._parseJsonInput(dataJson, null);
+
+      if (!payload) {
+        this._root.innerHTML = '<div class="error">Invalid data JSON.</div>';
+        return;
+      }
+
+      if (!Array.isArray(payload) && (payload.actualValue !== undefined || payload.actual !== undefined) && (payload.referenceValue !== undefined || payload.reference !== undefined)) {
+        this._dataItems = null;
+        this._dataMeta = null;
+        this._state.dimensionBreakdownEnabled = payload.dimensionBreakdownEnabled === true;
+        this._state.actualValue = this._toNumber(payload.actualValue !== undefined ? payload.actualValue : payload.actual);
+        this._state.referenceValue = this._toNumber(payload.referenceValue !== undefined ? payload.referenceValue : payload.reference);
+        this.render();
+        return;
+      }
+
+      const mapping = Array.isArray(payload)
+        ? {}
+        : {
+            dimensionId: payload.dimensionId || payload.dimension || this._state.dimensionId,
+            actualMeasureId: payload.actualMeasureId || payload.actualMeasure || this._state.actualMeasureId,
+            referenceMeasureId: payload.referenceMeasureId || payload.referenceMeasure || this._state.referenceMeasureId,
+            filters: payload.filters || payload.resultSetFilters || this._state.resultSetFilters
+          };
+
+      const normalized = Array.isArray(payload)
+        ? this._normalizeResultSet(payload, mapping)
+        : (Array.isArray(payload.items)
+            ? this._normalizeItems(payload.items, mapping)
+            : this._normalizeResultSet(payload.rows || payload.data || [], mapping));
+
+      if (!normalized.items.length) {
+        this._root.innerHTML = '<div class="error">No valid data in data JSON.</div>';
+        return;
+      }
+
+      this._dataItems = normalized.items;
+      this._dataMeta = normalized.meta;
+
+      if (!Array.isArray(payload) && payload.dimensionBreakdownEnabled !== undefined) {
+        this._state.dimensionBreakdownEnabled = payload.dimensionBreakdownEnabled === true || payload.dimensionBreakdownEnabled === "true";
+      } else {
+        this._state.dimensionBreakdownEnabled = true;
+      }
+
       this.render();
     }
 
+    setResultSet(resultSetJson, mappingJson) {
+      const resultSet = this._parseJsonInput(resultSetJson, null);
+      const mapping = this._parseJsonInput(mappingJson, {}) || {};
 
-    _getActiveDataBinding() {
-      if (this.dataBinding && Array.isArray(this.dataBinding.data)) {
-        return this.dataBinding;
+      if (!Array.isArray(resultSet)) {
+        this._root.innerHTML = '<div class="error">Invalid result set JSON: expected array.</div>';
+        return;
       }
 
-      if (this.myDataBinding && Array.isArray(this.myDataBinding.data)) {
-        return this.myDataBinding;
+      Object.keys(mapping).forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(this._state, key)) {
+          this._state[key] = this._parseValue(key, mapping[key]);
+        }
+      });
+
+      const normalized = this._normalizeResultSet(resultSet, {
+        dimensionId: mapping.dimensionId || this._state.dimensionId,
+        actualMeasureId: mapping.actualMeasureId || this._state.actualMeasureId,
+        referenceMeasureId: mapping.referenceMeasureId || this._state.referenceMeasureId,
+        filters: mapping.filters || mapping.resultSetFilters || this._state.resultSetFilters
+      });
+
+      if (!normalized.items.length) {
+        this._root.innerHTML = '<div class="error">No valid data in result set.</div>';
+        return;
       }
 
-      if (this.dataBindings) {
-        if (typeof this.dataBindings.getDataBinding === "function") {
-          try {
-            const binding = this.dataBindings.getDataBinding("dataBinding");
-            if (binding && Array.isArray(binding.data)) return binding;
-          } catch (e) {
-            // Some SAC runtimes expose data binding directly as this.dataBinding.
+      this._dataItems = normalized.items;
+      this._dataMeta = normalized.meta;
+
+      if (mapping.dimensionBreakdownEnabled !== undefined) {
+        this._state.dimensionBreakdownEnabled = mapping.dimensionBreakdownEnabled === true || mapping.dimensionBreakdownEnabled === "true";
+      } else {
+        this._state.dimensionBreakdownEnabled = true;
+      }
+
+      this.render();
+    }
+
+    _normalizeItems(items, mapping) {
+      const normalizedItems = [];
+
+      items.forEach((item, index) => {
+        if (!item || typeof item !== "object") return;
+
+        const actualKey = mapping.actualMeasureId || "actualValue";
+        const referenceKey = mapping.referenceMeasureId || "referenceValue";
+
+        const actual = this._toNumber(
+          item.actualValue !== undefined ? item.actualValue :
+          item.actual !== undefined ? item.actual :
+          item[actualKey]
+        );
+        const reference = this._toNumber(
+          item.referenceValue !== undefined ? item.referenceValue :
+          item.reference !== undefined ? item.reference :
+          item[referenceKey]
+        );
+
+        if (!Number.isFinite(actual) || !Number.isFinite(reference)) return;
+
+        const id = item.id !== undefined ? String(item.id) : String(index + 1);
+        const label = item.label !== undefined
+          ? String(item.label)
+          : item.description !== undefined
+            ? String(item.description)
+            : id;
+
+        normalizedItems.push({
+          id,
+          label,
+          actualValue: actual,
+          referenceValue: reference
+        });
+      });
+
+      return {
+        items: normalizedItems,
+        meta: {
+          dimensionId: mapping.dimensionId || "",
+          actualMeasureId: mapping.actualMeasureId || "actualValue",
+          referenceMeasureId: mapping.referenceMeasureId || "referenceValue"
+        }
+      };
+    }
+
+    _normalizeResultSet(rows, mapping) {
+      const filteredRows = rows.filter((row) => this._matchesResultSetFilters(row, mapping.filters || []));
+      if (!filteredRows.length) {
+        return { items: [], meta: {} };
+      }
+
+      const dimensionId = mapping.dimensionId || this._state.dimensionId || this._discoverFirstDimensionId(filteredRows);
+      if (!dimensionId) {
+        return { items: [], meta: {} };
+      }
+
+      const hasMeasureDimension = filteredRows.some((row) => row && row["@MeasureDimension"]);
+      const measureKeys = this._discoverMeasureKeys(filteredRows, dimensionId);
+
+      if (hasMeasureDimension && measureKeys.length < 2) {
+        return this._normalizeLongResultSet(filteredRows, mapping, dimensionId);
+      }
+
+      return this._normalizeWideResultSet(filteredRows, mapping, dimensionId, measureKeys);
+    }
+
+    _normalizeWideResultSet(rows, mapping, dimensionId, discoveredMeasureKeys) {
+      const measureKeys = discoveredMeasureKeys.length ? discoveredMeasureKeys : this._discoverMeasureKeys(rows, dimensionId);
+      const actualMeasureId = mapping.actualMeasureId || this._state.actualMeasureId || measureKeys[0] || "";
+      const referenceMeasureId = mapping.referenceMeasureId || this._state.referenceMeasureId || measureKeys[1] || "";
+
+      if (!actualMeasureId || !referenceMeasureId) {
+        return { items: [], meta: { dimensionId, actualMeasureId, referenceMeasureId } };
+      }
+
+      const groups = new Map();
+
+      rows.forEach((row) => {
+        const member = this._getMember(row, dimensionId);
+        const actual = this._toNumber(this._getCell(row, actualMeasureId));
+        const reference = this._toNumber(this._getCell(row, referenceMeasureId));
+
+        if (!member || !Number.isFinite(actual) || !Number.isFinite(reference)) return;
+
+        if (!groups.has(member.id)) {
+          groups.set(member.id, {
+            id: member.id,
+            label: member.label,
+            actualValue: 0,
+            referenceValue: 0
+          });
+        }
+
+        const target = groups.get(member.id);
+        target.actualValue += actual;
+        target.referenceValue += reference;
+      });
+
+      return {
+        items: Array.from(groups.values()),
+        meta: { dimensionId, actualMeasureId, referenceMeasureId }
+      };
+    }
+
+    _normalizeLongResultSet(rows, mapping, dimensionId) {
+      const measureMembers = [];
+      const seenMeasures = new Set();
+
+      rows.forEach((row) => {
+        const measure = this._getMember(row, "@MeasureDimension");
+        if (measure && !seenMeasures.has(measure.id)) {
+          seenMeasures.add(measure.id);
+          measureMembers.push(measure.id);
+        }
+      });
+
+      const actualMeasureId = mapping.actualMeasureId || this._state.actualMeasureId || measureMembers[0] || "";
+      const referenceMeasureId = mapping.referenceMeasureId || this._state.referenceMeasureId || measureMembers[1] || "";
+
+      if (!actualMeasureId || !referenceMeasureId) {
+        return { items: [], meta: { dimensionId, actualMeasureId, referenceMeasureId } };
+      }
+
+      const groups = new Map();
+
+      rows.forEach((row) => {
+        const member = this._getMember(row, dimensionId);
+        const measure = this._getMember(row, "@MeasureDimension");
+        if (!member || !measure) return;
+
+        const value = this._extractLongMeasureValue(row, actualMeasureId, referenceMeasureId);
+        if (!Number.isFinite(value)) return;
+
+        if (!groups.has(member.id)) {
+          groups.set(member.id, {
+            id: member.id,
+            label: member.label,
+            actualValue: 0,
+            referenceValue: 0,
+            _hasActual: false,
+            _hasReference: false
+          });
+        }
+
+        const target = groups.get(member.id);
+
+        if (measure.id === actualMeasureId || measure.label === actualMeasureId) {
+          target.actualValue += value;
+          target._hasActual = true;
+        }
+
+        if (measure.id === referenceMeasureId || measure.label === referenceMeasureId) {
+          target.referenceValue += value;
+          target._hasReference = true;
+        }
+      });
+
+      const items = Array.from(groups.values())
+        .filter((item) => item._hasActual && item._hasReference)
+        .map((item) => ({
+          id: item.id,
+          label: item.label,
+          actualValue: item.actualValue,
+          referenceValue: item.referenceValue
+        }));
+
+      return {
+        items,
+        meta: { dimensionId, actualMeasureId, referenceMeasureId }
+      };
+    }
+
+    _discoverFirstDimensionId(rows) {
+      for (let r = 0; r < rows.length; r += 1) {
+        const row = rows[r];
+        if (!row || typeof row !== "object") continue;
+
+        const keys = Object.keys(row);
+        for (let i = 0; i < keys.length; i += 1) {
+          const key = keys[i];
+          if (key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") continue;
+
+          const cell = row[key];
+
+          if (this._isDimensionCell(cell)) {
+            return key;
           }
         }
 
-        if (this.dataBindings.dataBinding && Array.isArray(this.dataBindings.dataBinding.data)) {
-          return this.dataBindings.dataBinding;
+        for (let i = 0; i < keys.length; i += 1) {
+          const key = keys[i];
+          if (key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") continue;
+
+          const cell = row[key];
+          if (!this._isMeasureCell(cell) && !Number.isFinite(this._toNumber(cell))) {
+            return key;
+          }
         }
       }
 
-      return null;
+      return "";
     }
 
-    _getFeedValues(metadata, feedId, fallbackPrefix) {
-      if (metadata && metadata.feeds && metadata.feeds[feedId] && Array.isArray(metadata.feeds[feedId].values)) {
-        return metadata.feeds[feedId].values.slice();
-      }
+    _discoverMeasureKeys(rows, dimensionId) {
+      const keys = [];
+      const seen = new Set();
 
-      if (metadata && metadata.feeds) {
-        const matchingFeed = Object.keys(metadata.feeds)
-          .map((key) => metadata.feeds[key])
-          .find((feed) => feed && feed.type && String(feed.type).toLowerCase() === String(fallbackPrefix).toLowerCase() && Array.isArray(feed.values));
+      rows.forEach((row) => {
+        if (!row || typeof row !== "object") return;
 
-        if (matchingFeed) return matchingFeed.values.slice();
-      }
+        Object.keys(row).forEach((key) => {
+          if (seen.has(key)) return;
+          if (key === dimensionId || key === "@MeasureDimension" || key === "rawValue" || key === "formattedValue" || key === "value") return;
 
-      return [];
+          const cell = row[key];
+
+          if (this._isMeasureCell(cell) || Number.isFinite(this._toNumber(cell))) {
+            seen.add(key);
+            keys.push(key);
+          }
+        });
+      });
+
+      return keys;
     }
 
-    _inferBindingKeys(rows, preferredPrefix) {
-      const first = Array.isArray(rows) && rows.length ? rows[0] : null;
-      if (!first || typeof first !== "object") return [];
+    _matchesResultSetFilters(row, filters) {
+      if (!Array.isArray(filters) || !filters.length) return true;
 
-      const keys = Object.keys(first);
-      const preferred = keys.filter((key) => key.indexOf(preferredPrefix) === 0);
-      return preferred.length ? preferred : keys;
+      return filters.every((filter) => {
+        if (!filter || !filter.dimensionId) return true;
+
+        const allowed = Array.isArray(filter.members)
+          ? filter.members.map((member) => String(member))
+          : filter.member !== undefined
+            ? [String(filter.member)]
+            : [];
+
+        if (!allowed.length) return true;
+
+        const member = this._getMember(row, filter.dimensionId);
+        if (!member) return false;
+
+        return allowed.includes(member.id) || allowed.includes(member.label);
+      });
     }
 
-    _selectBindingKey(keys, configuredValue, metadataMap, fallbackIndex) {
-      if (!Array.isArray(keys) || !keys.length) return "";
-
-      const fallback = keys[Math.min(Math.max(0, fallbackIndex || 0), keys.length - 1)];
-      if (configuredValue === undefined || configuredValue === null || String(configuredValue).trim() === "") {
-        return fallback;
-      }
-
-      const wanted = String(configuredValue).trim();
-
-      return keys.find((key) => {
-        const meta = metadataMap && metadataMap[key] ? metadataMap[key] : {};
-        return String(key) === wanted ||
-          String(meta.id || "") === wanted ||
-          String(meta.label || "") === wanted ||
-          String(meta.description || "") === wanted;
-      }) || fallback;
+    _getCell(row, key) {
+      if (!row || !key) return undefined;
+      return row[key];
     }
 
-    _cellRawValue(cell) {
-      if (cell === undefined || cell === null) return NaN;
-      if (typeof cell === "number") return cell;
-      if (typeof cell === "string") {
-        const n = Number(cell.replace(/\s/g, "").replace(",", "."));
-        return Number.isFinite(n) ? n : NaN;
-      }
+    _getMember(row, key) {
+      if (!row || !key || row[key] === undefined || row[key] === null) return null;
+
+      const cell = row[key];
 
       if (typeof cell === "object") {
-        const candidates = [cell.raw, cell.value, cell.number, cell.data, cell.formattedValue];
-        for (let i = 0; i < candidates.length; i += 1) {
-          const candidate = candidates[i];
-          if (candidate === undefined || candidate === null) continue;
-          if (typeof candidate === "number" && Number.isFinite(candidate)) return candidate;
-          if (typeof candidate === "string") {
-            const n = Number(candidate.replace(/\s/g, "").replace(",", "."));
-            if (Number.isFinite(n)) return n;
-          }
+        const id = cell.id !== undefined
+          ? String(cell.id)
+          : cell.key !== undefined
+            ? String(cell.key)
+            : cell.rawValue !== undefined
+              ? String(cell.rawValue)
+              : cell.value !== undefined
+                ? String(cell.value)
+                : "";
+
+        const label = cell.description !== undefined
+          ? String(cell.description)
+          : cell.label !== undefined
+            ? String(cell.label)
+            : cell.formattedValue !== undefined
+              ? String(cell.formattedValue)
+              : id;
+
+        return id ? { id, label: label || id } : null;
+      }
+
+      return {
+        id: String(cell),
+        label: String(cell)
+      };
+    }
+
+    _isDimensionCell(cell) {
+      return Boolean(
+        cell &&
+        typeof cell === "object" &&
+        !this._isMeasureCell(cell) &&
+        (cell.id !== undefined || cell.description !== undefined || cell.label !== undefined || cell.key !== undefined)
+      );
+    }
+
+    _isMeasureCell(cell) {
+      return Boolean(
+        cell &&
+        typeof cell === "object" &&
+        (cell.rawValue !== undefined || cell.formattedValue !== undefined || cell.value !== undefined) &&
+        !(cell.id !== undefined && cell.description !== undefined && cell.rawValue === undefined)
+      );
+    }
+
+    _extractLongMeasureValue(row, actualMeasureId, referenceMeasureId) {
+      if (row.rawValue !== undefined) return this._toNumber(row.rawValue);
+      if (row.value !== undefined) return this._toNumber(row.value);
+
+      if (row[actualMeasureId] !== undefined) return this._toNumber(row[actualMeasureId]);
+      if (row[referenceMeasureId] !== undefined) return this._toNumber(row[referenceMeasureId]);
+
+      const keys = Object.keys(row || {});
+      for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i];
+        if (key === "@MeasureDimension") continue;
+
+        const cell = row[key];
+        if (this._isMeasureCell(cell)) {
+          const n = this._toNumber(cell);
+          if (Number.isFinite(n)) return n;
         }
       }
 
       return NaN;
     }
 
-    _cellLabel(cell) {
-      if (cell === undefined || cell === null) return "";
-      if (typeof cell === "string" || typeof cell === "number") return String(cell);
-
-      if (typeof cell === "object") {
-        return String(cell.label || cell.description || cell.id || cell.formatted || cell.raw || "");
+    _toNumber(value) {
+      if (value && typeof value === "object") {
+        if (value.rawValue !== undefined) return this._toNumber(value.rawValue);
+        if (value.value !== undefined) return this._toNumber(value.value);
+        if (value.formattedValue !== undefined) return this._toNumber(value.formattedValue);
       }
 
-      return String(cell);
+      if (typeof value === "number") return value;
+
+      if (typeof value === "string") {
+        const normalized = value
+          .replace(/\s/g, "")
+          .replace(/%$/g, "")
+          .replace(/,/g, ".");
+
+        const n = Number(normalized);
+        return Number.isFinite(n) ? n : NaN;
+      }
+
+      const n = Number(value);
+      return Number.isFinite(n) ? n : NaN;
     }
 
-    _metadataLabel(metadataMap, key) {
-      const meta = metadataMap && metadataMap[key] ? metadataMap[key] : null;
-      if (!meta) return key;
-      return meta.description || meta.label || meta.id || key;
-    }
-
-    _getItemsFromSacBinding(binding) {
-      if (!binding || !Array.isArray(binding.data) || !binding.data.length) return [];
-
-      const metadata = binding.metadata || {};
-      const dimensionKeys = this._getFeedValues(metadata, "dimensions", "dimension");
-      const measureKeys = this._getFeedValues(metadata, "measures", "mainStructureMember");
-
-      const inferredDimensionKeys = dimensionKeys.length ? dimensionKeys : this._inferBindingKeys(binding.data, "dimensions_");
-      const inferredMeasureKeys = measureKeys.length ? measureKeys : this._inferBindingKeys(binding.data, "measures_");
-
-      const dimensionKey = this._selectBindingKey(
-        inferredDimensionKeys,
-        this._state.dimensionId,
-        metadata.dimensions,
-        0
-      );
-
-      const actualKey = this._selectBindingKey(
-        inferredMeasureKeys,
-        this._state.actualMeasureId,
-        metadata.mainStructureMembers || metadata.measures,
-        0
-      );
-
-      const referenceKey = this._selectBindingKey(
-        inferredMeasureKeys,
-        this._state.referenceMeasureId,
-        metadata.mainStructureMembers || metadata.measures,
-        actualKey === inferredMeasureKeys[0] ? 1 : 0
-      );
-
-      if (!dimensionKey || !actualKey || !referenceKey || actualKey === referenceKey) return [];
-
-      const grouped = new Map();
-
-      binding.data.forEach((row) => {
-        const dimensionCell = row[dimensionKey];
-        const label = this._cellLabel(dimensionCell) || "–";
-        const id = dimensionCell && typeof dimensionCell === "object" && dimensionCell.id ? String(dimensionCell.id) : label;
-        const actual = this._cellRawValue(row[actualKey]);
-        const reference = this._cellRawValue(row[referenceKey]);
-
-        if (!Number.isFinite(actual) && !Number.isFinite(reference)) return;
-
-        if (!grouped.has(id)) {
-          grouped.set(id, {
-            id,
-            label,
-            actualValue: 0,
-            referenceValue: 0,
-            dimensionKey,
-            actualMeasureKey: actualKey,
-            referenceMeasureKey: referenceKey,
-            dimensionName: this._metadataLabel(metadata.dimensions, dimensionKey),
-            actualMeasureName: this._metadataLabel(metadata.mainStructureMembers || metadata.measures, actualKey),
-            referenceMeasureName: this._metadataLabel(metadata.mainStructureMembers || metadata.measures, referenceKey)
-          });
-        }
-
-        const item = grouped.get(id);
-        if (Number.isFinite(actual)) item.actualValue += actual;
-        if (Number.isFinite(reference)) item.referenceValue += reference;
-      });
-
-      return Array.from(grouped.values());
-    }
-
-    _getItemsFromRows(rows) {
-      if (!Array.isArray(rows) || !rows.length) return [];
-
-      return rows.map((row, index) => {
-        if (Array.isArray(row)) {
-          return {
-            id: String(row[0] !== undefined ? row[0] : index),
-            label: String(row[0] !== undefined ? row[0] : index + 1),
-            actualValue: this._cellRawValue(row[1]),
-            referenceValue: this._cellRawValue(row[2])
-          };
-        }
-
-        if (!row || typeof row !== "object") return null;
-
-        const keys = Object.keys(row);
-        const configuredDimension = this._state.dimensionId;
-        const configuredActual = this._state.actualMeasureId;
-        const configuredReference = this._state.referenceMeasureId;
-
-        const dimensionKey = configuredDimension && keys.includes(configuredDimension)
-          ? configuredDimension
-          : (keys.find((key) => typeof row[key] === "string" || (row[key] && typeof row[key] === "object" && ("label" in row[key] || "id" in row[key]))) || keys[0]);
-
-        const numericKeys = keys.filter((key) => key !== dimensionKey && Number.isFinite(this._cellRawValue(row[key])));
-        const actualKey = configuredActual && keys.includes(configuredActual) ? configuredActual : (keys.includes("actualValue") ? "actualValue" : numericKeys[0]);
-        const referenceKey = configuredReference && keys.includes(configuredReference) ? configuredReference : (keys.includes("referenceValue") ? "referenceValue" : numericKeys.find((key) => key !== actualKey));
-
-        if (!dimensionKey || !actualKey || !referenceKey) return null;
-
-        return {
-          id: this._cellLabel(row[dimensionKey]) || String(index),
-          label: this._cellLabel(row[dimensionKey]) || String(index + 1),
-          actualValue: this._cellRawValue(row[actualKey]),
-          referenceValue: this._cellRawValue(row[referenceKey])
-        };
-      }).filter((item) => item && Number.isFinite(item.actualValue) && Number.isFinite(item.referenceValue));
-    }
-
-    _getDimensionBreakdownItems() {
-      if (!this._state.dimensionBreakdownEnabled) return [];
-
-      const bindingItems = this._getItemsFromSacBinding(this._getActiveDataBinding());
-      if (bindingItems.length) return bindingItems;
-
-      return this._getItemsFromRows(this._state.dataRows);
-    }
-
-    _renderDimensionBreakdown(items) {
+    _renderBreakdown() {
       const s = this._state;
-      const maxItems = Math.max(1, Number(s.maxBreakdownItems) || 50);
-      const visibleItems = items.slice(0, maxItems);
+      const maxItems = Math.max(1, Math.floor(Number(s.maxBreakdownItems) || 50));
+      const items = (Array.isArray(this._dataItems) ? this._dataItems : []).slice(0, maxItems);
       const itemHeight = Math.max(42, Number(s.breakdownItemHeight) || 78);
       const gap = Math.max(0, Number(s.breakdownItemGap) || 0);
       const labelPosition = String(s.dimensionLabelPosition || "top").toLowerCase() === "left" ? "left" : "top";
-      const showLabel = Boolean(s.showDimensionLabel);
+      const labelFontSize = Math.max(8, Number(s.dimensionLabelFontSize || s.fontSize || 12));
+      const labelColor = s.dimensionLabelColor || s.textColor;
 
-      this._removeTooltip();
-      this._root.style.backgroundColor = "transparent";
-      this._root.style.setProperty("--kpb-breakdown-label-font-size", `${Math.max(8, Number(s.fontSize))}px`);
-      this._root.style.setProperty("--kpb-breakdown-label-width", `${Math.max(40, Number(s.dimensionLabelWidth) || 120)}px`);
-
-      if (!visibleItems.length) {
-        this._root.innerHTML = `<div class="error">${this._escapeHtml(s.emptyDataText || "No data available.")}</div>`;
+      if (!items.length) {
+        this._root.innerHTML = '<div class="error">No breakdown data.</div>';
         return;
       }
 
-      const itemClass = labelPosition === "left" ? "kpb-item kpb-label-left" : "kpb-item kpb-label-top";
-      const chartHeight = labelPosition === "left" || !showLabel
-        ? itemHeight
-        : Math.max(34, itemHeight - Math.max(16, Number(s.fontSize) + 6));
-
       this._root.innerHTML = `
-        <div class="kpb-list" role="list" aria-label="KPI Pipeline Bullet breakdown">
-          ${visibleItems.map((item, index) => `
-            <div class="${itemClass}" role="listitem" style="height:${itemHeight}px;margin-bottom:${index === visibleItems.length - 1 ? 0 : gap}px;">
-              ${showLabel ? `<div class="kpb-title" title="${this._escapeHtml(item.label)}">${this._escapeHtml(item.label)}</div>` : ""}
-              <div class="kpb-chart" style="height:${chartHeight}px;">
-                <kpi-pipeline-bullet data-kpb-child-index="${index}"></kpi-pipeline-bullet>
+        <div class="breakdown-list">
+          ${items.map((item, index) => `
+            <div class="breakdown-item" style="height:${itemHeight}px;margin-bottom:${index === items.length - 1 ? 0 : gap}px;">
+              <div class="breakdown-item-inner ${labelPosition}">
+                ${s.showDimensionLabel ? `
+                  <div class="breakdown-label ${labelPosition}"
+                       title="${this._escapeHtml(item.label)}"
+                       style="font-size:${labelFontSize}px;color:${this._escapeHtml(labelColor)};">
+                    ${this._escapeHtml(item.label)}
+                  </div>
+                ` : ""}
+                <div class="breakdown-bullet-host">
+                  <kpi-pipeline-bullet class="breakdown-bullet" data-kpb-child="true"></kpi-pipeline-bullet>
+                </div>
               </div>
             </div>
           `).join("")}
         </div>
       `;
 
-      const childConfig = {};
-      Object.keys(s).forEach((key) => {
-        if ([
-          "dimensionBreakdownEnabled",
-          "dimensionId",
-          "actualMeasureId",
-          "referenceMeasureId",
-          "dataRows",
-          "maxBreakdownItems",
-          "breakdownItemHeight",
-          "breakdownItemGap",
-          "showDimensionLabel",
-          "dimensionLabelPosition",
-          "dimensionLabelWidth",
-          "emptyDataText"
-        ].includes(key)) {
-          return;
-        }
-
-        childConfig[key] = s[key];
+      const childConfig = Object.assign({}, s, {
+        dimensionBreakdownEnabled: false
       });
 
-      childConfig.dimensionBreakdownEnabled = false;
-
-      this.shadowRoot.querySelectorAll("kpi-pipeline-bullet[data-kpb-child-index]").forEach((child) => {
-        const index = Number(child.getAttribute("data-kpb-child-index"));
-        const item = visibleItems[index];
-
-        child.style.display = "block";
-        child.style.width = "100%";
-        child.style.height = `${chartHeight}px`;
-
-        if (typeof child.setConfig === "function") {
-          child.setConfig(Object.assign({}, childConfig, {
-            actualValue: item.actualValue,
-            referenceValue: item.referenceValue
-          }));
-        } else {
-          child.actualValue = item.actualValue;
-          child.referenceValue = item.referenceValue;
-          child.dimensionBreakdownEnabled = false;
-        }
+      const children = this.shadowRoot.querySelectorAll('kpi-pipeline-bullet[data-kpb-child="true"]');
+      children.forEach((child, index) => {
+        const item = items[index];
+        child.setConfig(childConfig);
+        child.setData(item.actualValue, item.referenceValue);
       });
     }
+
 
     _getSemanticValue(metric, context) {
       if (!metric) return NaN;
@@ -1295,9 +1497,8 @@
       this._root.style.setProperty("--kpb-font-style", s.fontStyle);
       this._root.style.setProperty("--kpb-text-color", s.textColor);
 
-      const breakdownItems = this._getDimensionBreakdownItems();
-      if (breakdownItems.length) {
-        this._renderDimensionBreakdown(breakdownItems);
+      if (s.dimensionBreakdownEnabled && Array.isArray(this._dataItems) && this._dataItems.length > 0) {
+        this._renderBreakdown();
         return;
       }
 

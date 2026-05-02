@@ -1,204 +1,115 @@
-
 # KPI Pipeline Bullet
 
-**Version:** 1.6.0  
-**Vendor:** petr.anderle@mathematix.cz  
-**License:** N/A
+**Version:** 1.8.0  
+**Vendor:** petr.anderle@mathematix.cz
 
-![KPI Pipeline Bullet Icon](https://anderlep.github.io/SAP-Analytics-Cloud/kpi-pipeline-bullet/icon.png)
+## What changed in 1.8.0
 
-## Description
-The KPI Pipeline Bullet is a custom SAP Analytics Cloud (SAC) widget designed to display KPI metrics as a bullet chart. This widget allows for the visualization of actual and reference values with dynamic zones and configurable visual properties. Key features include hover variance, reference lines, smart tooltips, and adaptive layout fallbacks.
+Version 1.8.0 removes the SAC `dataBindings` approach and adds script-driven data input:
 
-## Features
-- **Dynamic Zones:** Set lower, target, and upper bounds for the KPI range.
-- **Customizable Colors:** Customize the color of each zone (lower, target, upper).
-- **Variance Indicator:** Display the variance relative to the target value.
-- **Reference Line:** Display a reference line at a specific value.
-- **Responsive Layout:** Fully responsive design with fallback options for smaller screens.
-- **Smart Tooltips:** Dynamic tooltips that show additional information.
-- **Mobile Support:** Fully optimized for mobile views.
+- `setResultSet(resultSetJson, mappingJson)` for data from `getResultSet()`
+- `setDataJson(dataJson)` for custom normalized JSON
+- optional dimension breakdown rendering
+- automatic selection of the first dimension and first two measures when no mapping is provided
+- optional in-widget filtering over a shared result set
+- original single bullet mode is preserved
 
-## Installation
-To use the widget, include the web component JavaScript file:
+No model is loaded by the widget itself. You can load data once in a technical Table/Chart and pass the same result set to multiple widget instances.
 
-```html
-<script src="https://anderlep.github.io/SAP-Analytics-Cloud/kpi-pipeline-bullet/kpi-pipeline-bullet.js"></script>
-```
-
-Ensure that your project supports web components.
-
-## Properties
-| Property                        | Type    | Default Value | Description                                                                 |
-|----------------------------------|---------|---------------|-----------------------------------------------------------------------------|
-| `actualValue`                    | number  | 450           | The actual KPI value.                                                       |
-| `referenceValue`                 | number  | 500           | The reference KPI value (target value).                                      |
-| `lowerBoundZonePercentage`       | number  | 40            | Percentage of the lower zone.                                                |
-| `targetZonePercentage`           | number  | 20            | Percentage of the target zone.                                               |
-| `upperBoundZonePercentage`       | number  | 40            | Percentage of the upper zone.                                                |
-| `lowerBoundZoneColor`            | string  | "#E74C3C"     | Color of the lower zone.                                                    |
-| `targetZoneColor`                | string  | "#2ECC71"     | Color of the target zone.                                                   |
-| `upperBoundZoneColor`            | string  | "#F1C40F"     | Color of the upper zone.                                                    |
-| `markerColor`                    | string  | "#2F3C7E"     | Color of the marker.                                                        |
-| `referenceLineColor`             | string  | "#111111"     | Color of the reference line.                                                |
-| `showLabels`                     | boolean | true          | Whether to show labels for the zones.                                        |
-| `showMarkerLabel`                | boolean | true          | Whether to show a label on the marker.                                       |
-| `showAxisLabels`                 | boolean | false         | Whether to display axis labels.                                              |
-| `showReferenceLine`              | boolean | false         | Whether to show the reference line.                                          |
-| `referenceLineOnHover`           | boolean | true          | Whether the reference line appears on hover.                                |
-| `showVarianceIndicator`          | boolean | false         | Whether to display the variance indicator.                                   |
-| `varianceOnHover`                | boolean | true          | Whether the variance is shown on hover.                                      |
-| `varianceLineStyle`              | string  | "dashed"      | The line style of the variance indicator.                                    |
-| `varianceDisplayMode`            | string  | "percentage"  | The display mode for variance (percentage or absolute).                      |
-
-## Methods
-### `setData`
-```javascript
-setData(actualValue, referenceValue)
-```
-Sets the actual and reference values for the KPI.
-
-### `setZones`
-```javascript
-setZones(lowerBoundZonePercentage, targetZonePercentage, upperBoundZonePercentage)
-```
-Sets the percentages for the lower, target, and upper zones. The sum must be 100.
-
-### `setColors`
-```javascript
-setColors(lowerBoundZoneColor, targetZoneColor, upperBoundZoneColor, markerColor)
-```
-Sets the colors for the zones and optionally the marker.
-
-### `setVarianceDisplayMode`
-```javascript
-setVarianceDisplayMode(mode)
-```
-Sets the variance display mode (e.g., percentage or absolute).
-
-### `setConfig`
-```javascript
-setConfig(config)
-```
-Sets multiple properties via a JSON configuration.
-
-## Style Config and integration with SAC
+## Single bullet mode
 
 ```javascript
-// ==============================
-// ZONES
-// ==============================
-var cfg2 =
+KpiPipelineBullet_1.setData(15200, 13000);
+KpiPipelineBullet_1.setConfig(cfg);
+```
+
+## Result set mode
+
+```javascript
+var rsJson = JSON.stringify(Table_Data.getDataSource().getResultSet());
+
+KpiPipelineBullet_1.setConfig(cfg);
+KpiPipelineBullet_1.setResultSet(rsJson, JSON.stringify({
+  dimensionBreakdownEnabled: true,
+
+  // Optional. Empty or omitted = first dimension and first two measures.
+  dimensionId: "",
+  actualMeasureId: "",
+  referenceMeasureId: ""
+}));
+```
+
+## Two widgets with different filters from the same result set
+
+```javascript
+var rsJson = JSON.stringify(Table_Data.getDataSource().getResultSet());
+
+KpiPipelineBullet_1.setConfig(cfg);
+KpiPipelineBullet_1.setResultSet(rsJson, JSON.stringify({
+  dimensionBreakdownEnabled: true,
+  filters: [
+    {
+      dimensionId: "Region",
+      members: ["CZ"]
+    }
+  ]
+}));
+
+KpiPipelineBullet_2.setConfig(cfg);
+KpiPipelineBullet_2.setResultSet(rsJson, JSON.stringify({
+  dimensionBreakdownEnabled: true,
+  filters: [
+    {
+      dimensionId: "Region",
+      members: ["SK"]
+    }
+  ]
+}));
+```
+
+## Custom JSON mode
+
+```javascript
+KpiPipelineBullet_1.setConfig(cfg);
+KpiPipelineBullet_1.setDataJson(JSON.stringify({
+  dimension: "Region",
+  actualMeasure: "Actual",
+  referenceMeasure: "Target",
+  items: [
+    {
+      id: "CZ",
+      label: "Česko",
+      actualValue: 15200,
+      referenceValue: 13000
+    },
+    {
+      id: "SK",
+      label: "Slovensko",
+      actualValue: 9800,
+      referenceValue: 10500
+    }
+  ]
+}));
+```
+
+## Optional breakdown style config
+
+```javascript
+var cfg =
   '{' +
-  '"lowerBoundZonePercentage":20,' +
-  '"targetZonePercentage":60,' +
-  '"upperBoundZonePercentage":20,' +
-
-// ==============================
-// COLORS
-// ==============================
-  '"lowerBoundZoneColor":"#E74C3C",' +
-  '"targetZoneColor":"#2ECC71",' +
-  '"upperBoundZoneColor":"#F1C40F",' +
-  '"markerColor":"#2F3C7E",' +
-
-// ==============================
-// LABELS
-// ==============================
-  '"showAxisLabels":false,' +
-  '"showMarkerLabel":true,' +
-
-// ==============================
-// REFERENCE LINE
-// ==============================
-  '"showReferenceLine":false,' +
-  '"referenceLineOnHover":true,' +
-
-// ==============================
-// VARIANCE
-// ==============================
-  '"showVarianceIndicator":false,' +
-  '"varianceOnHover":true,' +
-  '"varianceLineStyle":"dashed",' +
-  '"varianceDisplayMode":"both",' +
-
-// ==============================
-// PADDING
-// ==============================
-  '"paddingTop":8,' +
-  '"paddingLeft":8,' +
-  '"paddingRight":8,' +
-  '"paddingBottom":16,' +
-
-// ==============================
-// SIZING
-// ==============================
-  '"barHeight":28,' +
-  '"markerWidth":2,' +
-  '"markerRadius":2,' +
-  '"referenceLineWidth":2,' +
-  '"varianceLineWidth":1,' +
-
-// ==============================
-// TYPOGRAPHY
-// ==============================
-  '"fontFamily":"Arial, Helvetica, sans-serif",' +
-  '"fontSize":11,' +
-  '"fontWeight":"normal",' +
-  '"fontStyle":"normal",' +
-  '"textColor":"#1f2d3d",' +
-
-// ==============================
-// TYPOGRAPHY OVERRIDE
-// ==============================
-  '"axisFontSize":10,' +
-  '"markerFontSize":12,' +
-
-// ==============================
-// SEMANTIC
-// ==============================
-  '"semanticIconVisible":true,' +
-  '"semanticIconPosition":"before",' +
-  '"semanticIconInMarkerLabel":true,' +      
-  '"semanticIconInTooltip":true,' +          
-  '"showSemanticStatusInTooltip":false,' +   
-
-// ==============================
-// SEMANTIC RULES
-// ==============================
-  '"semanticRules":[' +
-    '{"metric":"variancePercent","operator":"lt","value":0,"textColor":"#E74C3C","icon":"▼"},' +
-    '{"metric":"variancePercent","operator":"between","min":0,"max":0.6,"textColor":"#2ECC71","icon":"●"},' +
-    '{"metric":"variancePercent","operator":"gt","value":0.4,"textColor":"#F1C40F","icon":"▲"}' +
-  '],' +
-
-// ==============================
-// RESPONSIVE
-// ==============================
-  '"responsiveScaling":true,' +
-
-// ==============================
-// ADAPTIVE LAYOUT
-// ==============================
-  '"adaptiveLayout":true,' +
-  '"compactHeightThreshold":100,' +      // hide variance + reference
-  '"minimalHeightThreshold":80,' +       // hide variance + marker
-  '"hideVarianceWhenCompact":true,' +
-  '"hideReferenceLineWhenCompact":true,' +
-  '"hideMarkerLabelWhenMinimal":true' +
-
+  '"dimensionBreakdownEnabled":true,' +
+  '"maxBreakdownItems":50,' +
+  '"breakdownItemHeight":78,' +
+  '"breakdownItemGap":8,' +
+  '"showDimensionLabel":true,' +
+  '"dimensionLabelPosition":"top"' +
   '}';
 
-KpiPipelineBullet_1.setData(15200, 13000);
-KpiPipelineBullet_1.setConfig(cfg2);
+KpiPipelineBullet_1.setConfig(cfg);
 ```
 
+## Notes
 
-## Events
-Currently, no events are provided by this widget.
-
-## License
-This widget is provided as-is with no license specified. Please refer to the vendor for further licensing details.
-
-## Contact
-For more information or support, please contact **petr.anderle@mathematix.cz**.
+- If `dimensionBreakdownEnabled` is `false`, the widget renders the original single bullet.
+- If `setResultSet()` or `setDataJson()` receives item data and no explicit `dimensionBreakdownEnabled` value is provided, breakdown mode is enabled automatically.
+- Supported result set shapes include wide result sets with measure columns and long result sets with `@MeasureDimension`.

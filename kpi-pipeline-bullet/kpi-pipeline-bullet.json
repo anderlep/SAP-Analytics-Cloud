@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line, smart tooltip and optional dimension breakdown using the first dimension and first two measures from SAC data binding.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line, smart tooltip, script-driven result set support and optional dimension breakdown.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -19,22 +19,6 @@
       "ignoreIntegrity": true
     }
   ],
-  "dataBindings": {
-    "dataBinding": {
-      "feeds": [
-        {
-          "id": "dimensions",
-          "description": "Dimension breakdown (uses the first selected dimension when more dimensions are assigned)",
-          "type": "dimension"
-        },
-        {
-          "id": "measures",
-          "description": "Measures (uses the first two selected measures: actual and reference)",
-          "type": "mainStructureMember"
-        }
-      ]
-    }
-  },
   "properties": {
     "actualValue": {
       "type": "number",
@@ -258,23 +242,7 @@
     },
     "dimensionBreakdownEnabled": {
       "type": "boolean",
-      "default": true
-    },
-    "dimensionId": {
-      "type": "string",
-      "default": ""
-    },
-    "actualMeasureId": {
-      "type": "string",
-      "default": ""
-    },
-    "referenceMeasureId": {
-      "type": "string",
-      "default": ""
-    },
-    "dataRows": {
-      "type": "string",
-      "default": "[]"
+      "default": false
     },
     "maxBreakdownItems": {
       "type": "number",
@@ -296,13 +264,29 @@
       "type": "string",
       "default": "top"
     },
-    "dimensionLabelWidth": {
+    "dimensionLabelFontSize": {
       "type": "number",
-      "default": 120
+      "default": 12
     },
-    "emptyDataText": {
+    "dimensionLabelColor": {
       "type": "string",
-      "default": "No data available."
+      "default": ""
+    },
+    "dimensionId": {
+      "type": "string",
+      "default": ""
+    },
+    "actualMeasureId": {
+      "type": "string",
+      "default": ""
+    },
+    "referenceMeasureId": {
+      "type": "string",
+      "default": ""
+    },
+    "resultSetFilters": {
+      "type": "string",
+      "default": "[]"
     }
   },
   "methods": {
@@ -380,18 +364,42 @@
       ],
       "returnType": "void"
     },
-    "setDataRows": {
-      "description": "Set multiple rows for dimension breakdown. Accepts a JSON string or array with dimension/actual/reference values.",
+    "setDataJson": {
+      "description": "Set widget data from normalized JSON. Supports single bullet and item array for dimension breakdown.",
       "parameters": [
         {
-          "name": "dataRows",
+          "name": "dataJson",
           "type": "string"
         }
       ],
       "returnType": "void"
     },
+    "setResultSet": {
+      "description": "Set data from SAC getResultSet() JSON and optional mapping/filter JSON.",
+      "parameters": [
+        {
+          "name": "resultSetJson",
+          "type": "string"
+        },
+        {
+          "name": "mappingJson",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setDimensionBreakdownEnabled": {
+      "description": "Enable or disable dimension breakdown rendering.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "type": "boolean"
+        }
+      ],
+      "returnType": "void"
+    },
     "setDimensionBinding": {
-      "description": "Select dimension and measure aliases/IDs/labels. If omitted, the first dimension and first two measures from the data binding are used.",
+      "description": "Set optional dimension, actual measure and reference measure identifiers. Empty values use first dimension and first two measures.",
       "parameters": [
         {
           "name": "dimensionId",
@@ -404,16 +412,6 @@
         {
           "name": "referenceMeasureId",
           "type": "string"
-        }
-      ],
-      "returnType": "void"
-    },
-    "setDimensionBreakdownEnabled": {
-      "description": "Enable or disable dimension breakdown rendering.",
-      "parameters": [
-        {
-          "name": "enabled",
-          "type": "boolean"
         }
       ],
       "returnType": "void"
