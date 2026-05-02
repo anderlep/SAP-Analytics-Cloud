@@ -1,8 +1,8 @@
 {
   "id": "com.company.sac.kpi.pipeline.bullet",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "name": "KPI Pipeline Bullet",
-  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line and smart tooltip.",
+  "description": "Custom KPI pipeline bullet chart with dynamic zones, configurable sizing, typography, padding, semantic rules, adaptive layout fallback, hover variance, hover reference line, smart tooltip and optional dimension breakdown using the first dimension and first two measures from SAC data binding.",
   "newInstancePrefix": "KpiPipelineBullet",
   "vendor": "petr.anderle@mathematix.cz",
   "license": "",
@@ -19,6 +19,26 @@
       "ignoreIntegrity": true
     }
   ],
+  "dataBindings": {
+    "dataBinding": {
+      "feeds": [
+        {
+          "id": "dimensions",
+          "description": "Dimension breakdown (uses the first selected dimension when more dimensions are assigned)",
+          "type": "dimension",
+          "min": 0,
+          "max": 20
+        },
+        {
+          "id": "measures",
+          "description": "Measures (uses the first two selected measures: actual and reference)",
+          "type": "mainStructureMember",
+          "min": 0,
+          "max": 20
+        }
+      ]
+    }
+  },
   "properties": {
     "actualValue": {
       "type": "number",
@@ -239,6 +259,54 @@
     "showSemanticStatusInTooltip": {
       "type": "boolean",
       "default": false
+    },
+    "dimensionBreakdownEnabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "dimensionId": {
+      "type": "string",
+      "default": ""
+    },
+    "actualMeasureId": {
+      "type": "string",
+      "default": ""
+    },
+    "referenceMeasureId": {
+      "type": "string",
+      "default": ""
+    },
+    "dataRows": {
+      "type": "string",
+      "default": "[]"
+    },
+    "maxBreakdownItems": {
+      "type": "number",
+      "default": 50
+    },
+    "breakdownItemHeight": {
+      "type": "number",
+      "default": 78
+    },
+    "breakdownItemGap": {
+      "type": "number",
+      "default": 8
+    },
+    "showDimensionLabel": {
+      "type": "boolean",
+      "default": true
+    },
+    "dimensionLabelPosition": {
+      "type": "string",
+      "default": "top"
+    },
+    "dimensionLabelWidth": {
+      "type": "number",
+      "default": 120
+    },
+    "emptyDataText": {
+      "type": "string",
+      "default": "No data available."
     }
   },
   "methods": {
@@ -312,6 +380,44 @@
         {
           "name": "config",
           "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setDataRows": {
+      "description": "Set multiple rows for dimension breakdown. Accepts a JSON string or array with dimension/actual/reference values.",
+      "parameters": [
+        {
+          "name": "dataRows",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setDimensionBinding": {
+      "description": "Select dimension and measure aliases/IDs/labels. If omitted, the first dimension and first two measures from the data binding are used.",
+      "parameters": [
+        {
+          "name": "dimensionId",
+          "type": "string"
+        },
+        {
+          "name": "actualMeasureId",
+          "type": "string"
+        },
+        {
+          "name": "referenceMeasureId",
+          "type": "string"
+        }
+      ],
+      "returnType": "void"
+    },
+    "setDimensionBreakdownEnabled": {
+      "description": "Enable or disable dimension breakdown rendering.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "type": "boolean"
         }
       ],
       "returnType": "void"
